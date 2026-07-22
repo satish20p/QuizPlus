@@ -111,8 +111,13 @@ export const LiveStageView: React.FC<LiveStageViewProps> = ({
 
             <div className="flex flex-wrap justify-center gap-3">
               {participantList.map((p) => (
-                <span key={p.id} className="bg-white border border-slate-200 px-4 py-2 rounded-xl text-sm font-bold text-slate-800 shadow-sm">
-                  {p.name}
+                <span key={p.id} className="bg-white border border-slate-200 px-4 py-2 rounded-xl text-sm font-bold text-slate-800 shadow-sm flex items-center gap-2">
+                  <span>{p.name}</span>
+                  {p.prn && (
+                    <span className="text-[10px] font-mono bg-indigo-50 border border-indigo-200 text-indigo-700 px-1.5 py-0.5 rounded">
+                      PRN: {p.prn}
+                    </span>
+                  )}
                 </span>
               ))}
             </div>
@@ -230,6 +235,9 @@ export const LiveStageView: React.FC<LiveStageViewProps> = ({
                       {idx === 0 ? '🥇 1st' : idx === 1 ? '🥈 2nd' : '🥉 3rd'}
                     </span>
                     <h3 className="font-extrabold text-xl">{p.name}</h3>
+                    {p.prn && (
+                      <p className="text-xs font-mono font-bold text-indigo-700">PRN: {p.prn}</p>
+                    )}
                     <p className="text-lg font-mono font-bold text-amber-600">{p.score} PTS</p>
                   </div>
                 ))}
@@ -237,6 +245,53 @@ export const LiveStageView: React.FC<LiveStageViewProps> = ({
             </div>
           )}
 
+        </div>
+      )}
+
+      {/* COMPLETED QUIZ FINAL TOP 5 LEADERBOARD */}
+      {session && session.state === 'ended' && (
+        <div className="bg-white border border-slate-200 rounded-3xl p-8 shadow-xl space-y-8 max-w-4xl mx-auto text-center animate-in fade-in zoom-in-95 duration-300">
+          <div className="space-y-2">
+            <div className="w-16 h-16 mx-auto rounded-full bg-amber-100 text-amber-600 border border-amber-300 flex items-center justify-center shadow-lg animate-bounce">
+              <Trophy className="w-9 h-9 text-amber-500" />
+            </div>
+            <h2 className="text-3xl font-black text-slate-900 tracking-tight">Quiz Complete!</h2>
+            <p className="text-sm font-semibold text-slate-500">Official Top 5 Leadership Board</p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
+            {participantList.slice(0, 5).map((p, idx) => {
+              const medals = ['🥇 1st', '🥈 2nd', '🥉 3rd', '4th', '5th'];
+              return (
+                <div
+                  key={p.id}
+                  className={`p-4 rounded-2xl border text-center space-y-2 shadow-sm transition transform hover:-translate-y-1 ${
+                    idx === 0
+                      ? 'bg-gradient-to-b from-amber-50 to-amber-100/60 border-amber-300 text-slate-900 ring-2 ring-amber-400'
+                      : idx === 1
+                      ? 'bg-slate-50 border-slate-300 text-slate-800'
+                      : idx === 2
+                      ? 'bg-amber-50/40 border-amber-200 text-slate-800'
+                      : 'bg-white border-slate-200 text-slate-700'
+                  }`}
+                >
+                  <span className="text-lg font-black font-mono block text-amber-600">
+                    {medals[idx]}
+                  </span>
+                  <div>
+                    <h3 className="font-extrabold text-sm text-slate-900 truncate">{p.name}</h3>
+                    <p className="text-[11px] font-mono font-bold text-indigo-700 mt-0.5 truncate">
+                      PRN: {p.prn || 'N/A'}
+                    </p>
+                  </div>
+                  <div className="pt-2 border-t border-slate-200/60">
+                    <p className="text-base font-mono font-black text-amber-600">{p.score} PTS</p>
+                    <p className="text-[10px] text-slate-500 font-semibold">{p.correctAnswersCount} Correct</p>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         </div>
       )}
 

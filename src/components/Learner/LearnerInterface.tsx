@@ -26,7 +26,7 @@ interface LearnerInterfaceProps {
   currentUser: User;
   session: LiveSession | null;
   quiz: Quiz | null;
-  onJoinByPin: (pin: string, name: string) => void;
+  onJoinByPin: (pin: string, name: string, prn?: string) => void;
   onSubmitAnswer: (submission: Submission) => void;
   activePinInput?: string;
 }
@@ -39,8 +39,13 @@ export const LearnerInterface: React.FC<LearnerInterfaceProps> = ({
   onSubmitAnswer,
   activePinInput = ''
 }) => {
-  const [pin, setPin] = useState(activePinInput || '');
-  const [guestName, setGuestName] = useState(currentUser.name || '');
+  const searchParams = new URLSearchParams(window.location.search);
+  const urlPrn = searchParams.get('prn') || '';
+  const urlName = searchParams.get('name') || currentUser.name || '';
+
+  const [pin, setPin] = useState(activePinInput || searchParams.get('pin') || '');
+  const [guestName, setGuestName] = useState(urlName);
+  const [prn, setPrn] = useState(urlPrn);
   const [selectedOptId, setSelectedOptId] = useState<string | null>(null);
   const [hasSubmitted, setHasSubmitted] = useState(false);
   const [deviceFrame, setDeviceFrame] = useState<boolean>(true); // Smartphone Frame toggle for realistic preview
@@ -183,7 +188,7 @@ export const LearnerInterface: React.FC<LearnerInterfaceProps> = ({
   const handleJoin = (e: React.FormEvent) => {
     e.preventDefault();
     if (pin.trim() && guestName.trim()) {
-      onJoinByPin(pin.trim(), guestName.trim());
+      onJoinByPin(pin.trim(), guestName.trim(), prn.trim());
     }
   };
 
@@ -291,7 +296,7 @@ export const LearnerInterface: React.FC<LearnerInterfaceProps> = ({
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">Your Display Name</label>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">Learner Full Name</label>
                 <input
                   type="text"
                   required
@@ -299,6 +304,20 @@ export const LearnerInterface: React.FC<LearnerInterfaceProps> = ({
                   value={guestName}
                   onChange={(e) => setGuestName(e.target.value)}
                   className="w-full bg-slate-50 border border-slate-300 text-slate-900 px-3 py-2.5 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-600"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  PRN / Roll Number <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. 2024018290"
+                  value={prn}
+                  onChange={(e) => setPrn(e.target.value)}
+                  className="w-full bg-slate-50 border border-slate-300 text-slate-900 font-mono px-3 py-2.5 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-600"
                 />
               </div>
 
@@ -325,7 +344,14 @@ export const LearnerInterface: React.FC<LearnerInterfaceProps> = ({
                 You are in!
               </span>
               <h2 className="text-xl font-black text-slate-900 mt-2">{session.quizTitle}</h2>
-              <p className="text-xs text-slate-500 mt-1">Learner: <span className="font-bold text-slate-800">{guestName}</span></p>
+              <div className="flex flex-col items-center gap-1 mt-2 text-xs text-slate-600">
+                <p>Learner: <span className="font-bold text-slate-900">{guestName}</span></p>
+                {prn && (
+                  <span className="bg-indigo-50 border border-indigo-200 text-indigo-700 font-mono font-bold px-2.5 py-0.5 rounded-md text-[11px]">
+                    PRN: {prn}
+                  </span>
+                )}
+              </div>
             </div>
 
             <div className="bg-slate-50 border border-slate-200 p-4 rounded-xl text-xs text-slate-700 space-y-2">
@@ -512,24 +538,93 @@ export const LearnerInterface: React.FC<LearnerInterfaceProps> = ({
           );
         })()}
 
-        {/* SECTION 4: ENDED QUIZ SUMMARY */}
-        {session && session.state === 'ended' && (
-          <div className="space-y-6 pt-6 text-center my-auto">
-            <div className="w-16 h-16 mx-auto rounded-full bg-amber-100 text-amber-600 border border-amber-200 flex items-center justify-center shadow-md">
-              <Trophy className="w-8 h-8" />
-            </div>
+        {/* SECTION 4: ENDED QUIZ SUMMARY & TOP 5 LEADERBOARD */}
+        {session && session.state === 'ended' && (() => {
+          const participantsArr = Object.values(session.participants || {});
+          const sorted = [...participantsArr].sort((a, b) => b.score - a.score || b.correctAnswersCount - a.correctAnswersCount);
+          const top5 = sorted.slice(0, 5);
+          const userRank = sorted.findIndex(p => p.id === currentUser.id || p.name === guestName) + 1;
 
-            <div>
-              <h2 className="text-2xl font-black text-slate-900">Quiz Completed!</h2>
-              <p className="text-xs text-slate-500 mt-1">Great job, {guestName}!</p>
-            </div>
+          return (
+            <div className="space-y-4 pt-3 text-center my-auto">
+              <div className="w-14 h-14 mx-auto rounded-full bg-amber-100 text-amber-600 border border-amber-200 flex items-center justify-center shadow-md">
+                <Trophy className="w-7 h-7" />
+              </div>
 
-            <div className="bg-slate-50 border border-slate-200 p-5 rounded-2xl text-center space-y-2">
-              <p className="text-xs text-slate-500 uppercase font-bold tracking-wider">Final Score</p>
-              <p className="text-4xl font-black text-amber-600">{currentScore} PTS</p>
+              <div>
+                <h2 className="text-xl font-black text-slate-900">Quiz Completed!</h2>
+                <p className="text-xs text-slate-500 mt-0.5">Great job, <span className="font-bold text-slate-800">{guestName}</span>!</p>
+              </div>
+
+              {/* Your Score Banner */}
+              <div className="bg-gradient-to-br from-indigo-50 to-slate-50 border border-indigo-200 p-3 rounded-xl text-center flex items-center justify-between px-4 shadow-xs">
+                <div>
+                  <p className="text-[10px] text-slate-500 uppercase font-bold tracking-wider">Your Score</p>
+                  <p className="text-2xl font-black text-indigo-600">{currentScore} PTS</p>
+                </div>
+                {userRank > 0 && (
+                  <div className="text-right">
+                    <p className="text-[10px] text-slate-500 uppercase font-bold tracking-wider">Your Rank</p>
+                    <p className="text-lg font-black text-amber-600">#{userRank} / {sorted.length}</p>
+                  </div>
+                )}
+              </div>
+
+              {/* TOP 5 LEADERBOARD TABLE */}
+              <div className="bg-white border border-slate-200 rounded-2xl p-3.5 shadow-xs text-left space-y-2.5">
+                <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+                  <h3 className="text-xs font-black text-slate-900 uppercase tracking-wider flex items-center gap-1.5">
+                    <Award className="w-4 h-4 text-amber-500" />
+                    Top 5 Leadership Board
+                  </h3>
+                  <span className="text-[10px] font-mono text-slate-500 font-bold">{sorted.length} Learners</span>
+                </div>
+
+                <div className="space-y-1.5">
+                  {top5.map((p, idx) => {
+                    const isCurrentUser = p.id === currentUser.id || p.name === guestName;
+                    const medals = ['🥇', '🥈', '🥉', '4️⃣', '5️⃣'];
+
+                    return (
+                      <div
+                        key={p.id || idx}
+                        className={`p-2.5 rounded-xl border flex items-center justify-between text-xs transition ${
+                          isCurrentUser
+                            ? 'bg-indigo-50/90 border-indigo-300 ring-1 ring-indigo-400 font-semibold'
+                            : idx === 0
+                            ? 'bg-amber-50/60 border-amber-200'
+                            : 'bg-slate-50 border-slate-200'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2.5 overflow-hidden pr-2">
+                          <span className="text-base shrink-0">{medals[idx]}</span>
+                          <div className="overflow-hidden">
+                            <p className="font-bold text-slate-900 truncate flex items-center gap-1.5">
+                              <span>{p.name}</span>
+                              {isCurrentUser && (
+                                <span className="bg-indigo-600 text-white text-[9px] px-1.5 py-0.2 rounded font-mono uppercase">You</span>
+                              )}
+                            </p>
+                            <p className="text-[10px] font-mono text-slate-500">
+                              PRN: <span className="font-bold text-indigo-700">{p.prn || 'N/A'}</span>
+                            </p>
+                          </div>
+                        </div>
+                        <span className="font-mono font-black text-amber-600 text-sm shrink-0">
+                          {p.score} PTS
+                        </span>
+                      </div>
+                    );
+                  })}
+
+                  {top5.length === 0 && (
+                    <p className="text-xs text-slate-400 italic py-2 text-center">No participants recorded yet.</p>
+                  )}
+                </div>
+              </div>
             </div>
-          </div>
-        )}
+          );
+        })()}
 
       </div>
 

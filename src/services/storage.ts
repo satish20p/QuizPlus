@@ -186,6 +186,74 @@ export const storageService = {
     const active = this.getActiveSessions();
     active[session.pin] = session;
     this.saveActiveSessions(active);
+
+    if (session.state === 'ended') {
+      this.ensureSessionReportSaved(session);
+    }
+  },
+
+  ensureSessionReportSaved(session: LiveSession): void {
+    const reports = this.getReports();
+    const existing = reports.find(r => r.sessionPin === session.pin);
+
+    const participantsList = Object.values(session.participants || {});
+    const sortedParticipants = [...participantsList].sort((a, b) => b.score - a.score);
+
+    const quizzes = this.getQuizzes();
+    const quiz = quizzes.find(q => q.id === session.quizId);
+    const totalQuestions = quiz?.questions.length || 1;
+
+    const participantScores = sortedParticipants.map((p, idx) => ({
+      participantId: p.id,
+      participantName: p.name,
+      prn: p.prn || 'N/A',
+      score: p.score,
+      correctCount: p.correctAnswersCount,
+      totalCount: totalQuestions,
+      accuracyPercent: Math.round((p.correctAnswersCount / totalQuestions) * 100),
+      rank: idx + 1
+    }));
+
+    const questionBreakdown = (quiz?.questions || []).map((q, qIdx) => {
+      const qSubmissions = (session.submissions || []).filter(s => s.questionId === q.id);
+      const correctSubs = qSubmissions.filter(s => s.isCorrect);
+      const correctOptText = q.options.find(o => o.id === q.correctOptionId)?.text || '';
+      const avgTime = qSubmissions.length > 0 
+        ? Math.round((qSubmissions.reduce((acc, curr) => acc + curr.timeTakenSeconds, 0) / qSubmissions.length) * 10) / 10 
+        : 0;
+
+      return {
+        questionIndex: qIdx + 1,
+        questionText: q.questionText,
+        correctOptionText: correctOptText,
+        totalSubmissions: qSubmissions.length,
+        correctCount: correctSubs.length,
+        accuracyPercent: qSubmissions.length > 0 ? Math.round((correctSubs.length / qSubmissions.length) * 100) : 0,
+        averageTimeSeconds: avgTime
+      };
+    });
+
+    const totalScoreSum = participantScores.reduce((acc, p) => acc + p.score, 0);
+    const avgScore = participantScores.length > 0 ? Math.round(totalScoreSum / participantScores.length) : 0;
+    const avgAccuracy = participantScores.length > 0 
+      ? Math.round(participantScores.reduce((acc, p) => acc + p.accuracyPercent, 0) / participantScores.length) 
+      : 0;
+
+    const report: SessionReport = {
+      id: existing?.id || `rep-${Date.now()}`,
+      sessionPin: session.pin,
+      quizId: session.quizId,
+      quizTitle: session.quizTitle,
+      trainerName: session.trainerName,
+      date: session.endedAt || new Date().toISOString(),
+      totalParticipants: participantsList.length,
+      averageScore: avgScore,
+      averageAccuracy: avgAccuracy,
+      participantScores,
+      questionBreakdown
+    };
+
+    this.saveReport(report);
   },
 
   // --- REPORTS ---

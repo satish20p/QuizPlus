@@ -23,6 +23,7 @@ export const exportService = {
     const participantRows = report.participantScores.map(p => ({
       'Rank': p.rank,
       'Participant Name': p.participantName,
+      'PRN / Roll No': p.prn || 'N/A',
       'Total Score': p.score,
       'Correct Answers': p.correctCount,
       'Total Questions': p.totalCount,
@@ -97,10 +98,11 @@ export const exportService = {
     doc.setFont('helvetica', 'bold');
     doc.setTextColor(71, 85, 105);
     doc.text('Rank', 18, y + 5.5);
-    doc.text('Participant Name', 35, y + 5.5);
-    doc.text('Score', 110, y + 5.5);
-    doc.text('Correct / Total', 140, y + 5.5);
-    doc.text('Accuracy', 172, y + 5.5);
+    doc.text('Participant Name', 32, y + 5.5);
+    doc.text('PRN / Roll No', 85, y + 5.5);
+    doc.text('Score', 125, y + 5.5);
+    doc.text('Correct / Total', 148, y + 5.5);
+    doc.text('Accuracy', 174, y + 5.5);
     y += 8;
 
     doc.setFont('helvetica', 'normal');
@@ -115,10 +117,11 @@ export const exportService = {
       }
       doc.setTextColor(30, 41, 59);
       doc.text(`#${p.rank}`, 18, y + 5);
-      doc.text(p.participantName.substring(0, 32), 35, y + 5);
-      doc.text(`${p.score} pts`, 110, y + 5);
-      doc.text(`${p.correctCount} / ${p.totalCount}`, 140, y + 5);
-      doc.text(`${p.accuracyPercent}%`, 172, y + 5);
+      doc.text(p.participantName.substring(0, 24), 32, y + 5);
+      doc.text((p.prn || 'N/A').substring(0, 18), 85, y + 5);
+      doc.text(`${p.score} pts`, 125, y + 5);
+      doc.text(`${p.correctCount} / ${p.totalCount}`, 148, y + 5);
+      doc.text(`${p.accuracyPercent}%`, 174, y + 5);
       y += 7;
     });
 

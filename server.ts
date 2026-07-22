@@ -66,6 +66,7 @@ wss.on('connection', (ws: ClientWs) => {
           ws.isHost = false;
           ws.userId = payload?.userId || `guest-${Date.now()}`;
           ws.userName = payload?.userName || 'Anonymous Participant';
+          const prnVal = payload?.prn || '';
           room.clients.add(ws);
 
           if (room.sessionState && payload) {
@@ -75,6 +76,7 @@ wss.on('connection', (ws: ClientWs) => {
             room.sessionState.participants[ws.userId] = {
               id: ws.userId,
               name: ws.userName,
+              prn: prnVal,
               score: 0,
               correctAnswersCount: 0,
               totalAnsweredCount: 0,

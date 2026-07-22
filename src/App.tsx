@@ -44,11 +44,13 @@ export default function App() {
     const loadedLogs = storageService.getAuditLogs();
     setAuditLogs(loadedLogs);
 
-    // Check URL query param for ?pin=XXXXXX
+    // Check URL query param for ?pin=XXXXXX&name=...&prn=...
     const params = new URLSearchParams(window.location.search);
     const pinParam = params.get('pin');
+    const nameParam = params.get('name') || loadedUsers[3]?.name || 'Guest Participant';
+    const prnParam = params.get('prn') || '';
     if (pinParam) {
-      handleJoinSessionByPin(pinParam, loadedUsers[3]?.name || 'Guest Participant');
+      handleJoinSessionByPin(pinParam, nameParam, prnParam);
       setActiveView('learner');
     }
   }, []);
@@ -111,7 +113,7 @@ export default function App() {
     }
   };
 
-  const handleJoinSessionByPin = (pin: string, learnerName: string) => {
+  const handleJoinSessionByPin = (pin: string, learnerName: string, prn?: string) => {
     let session = storageService.getSession(pin);
     if (!session) {
       // Find default or recent session
@@ -120,13 +122,31 @@ export default function App() {
     }
 
     if (session) {
-      setActiveSession(session);
-      const quiz = quizzes.find(q => q.id === session.quizId) || null;
+      const participantId = currentUser?.id || `guest-${Date.now()}`;
+      const existingP = session.participants?.[participantId];
+      const updatedParticipants = {
+        ...(session.participants || {}),
+        [participantId]: {
+          id: participantId,
+          name: learnerName,
+          prn: prn || '',
+          score: existingP?.score || 0,
+          correctAnswersCount: existingP?.correctAnswersCount || 0,
+          totalAnsweredCount: existingP?.totalAnsweredCount || 0,
+          joinedAt: existingP?.joinedAt || new Date().toISOString(),
+          isGuest: true
+        }
+      };
+      const activeRoom: LiveSession = { ...session, participants: updatedParticipants };
+      storageService.updateSession(activeRoom);
+      setActiveSession(activeRoom);
+      const quiz = quizzes.find(q => q.id === activeRoom.quizId) || null;
       setActiveQuiz(quiz);
 
       connectWebSocket(pin, false, {
-        userId: currentUser?.id || `guest-${Date.now()}`,
-        userName: learnerName
+        userId: participantId,
+        userName: learnerName,
+        prn: prn || ''
       });
     } else {
       alert(`Session PIN ${pin} not found. Please verify the 6-digit PIN.`);

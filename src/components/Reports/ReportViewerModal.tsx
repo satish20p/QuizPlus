@@ -90,6 +90,7 @@ export const ReportViewerModal: React.FC<ReportViewerModalProps> = ({ report, on
                   <tr>
                     <th className="px-4 py-3">Rank</th>
                     <th className="px-4 py-3">Learner Name</th>
+                    <th className="px-4 py-3">PRN / Roll No</th>
                     <th className="px-4 py-3">Score</th>
                     <th className="px-4 py-3">Correct / Total</th>
                     <th className="px-4 py-3 text-right">Accuracy</th>
@@ -100,6 +101,7 @@ export const ReportViewerModal: React.FC<ReportViewerModalProps> = ({ report, on
                     <tr key={p.participantId} className="hover:bg-slate-50">
                       <td className="px-4 py-3 font-bold text-amber-600">#{p.rank}</td>
                       <td className="px-4 py-3 font-bold text-slate-900">{p.participantName}</td>
+                      <td className="px-4 py-3 font-mono font-semibold text-indigo-700">{p.prn || 'N/A'}</td>
                       <td className="px-4 py-3 font-mono font-bold text-slate-700">{p.score} pts</td>
                       <td className="px-4 py-3 text-slate-500">{p.correctCount} / {p.totalCount}</td>
                       <td className="px-4 py-3 text-right font-bold text-emerald-600">{p.accuracyPercent}%</td>

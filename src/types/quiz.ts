@@ -51,6 +51,7 @@ export type SessionState =
 export interface Participant {
   id: string;
   name: string;
+  prn?: string;
   avatar?: string;
   score: number;
   correctAnswersCount: number;
@@ -101,6 +102,7 @@ export interface SessionReport {
   participantScores: {
     participantId: string;
     participantName: string;
+    prn?: string;
     score: number;
     correctCount: number;
     totalCount: number;

@@ -146,6 +146,7 @@ export const LiveHostView: React.FC<LiveHostViewProps> = ({
     const participantScores = sortedParticipants.map((p, idx) => ({
       participantId: p.id,
       participantName: p.name,
+      prn: p.prn,
       score: p.score,
       correctCount: p.correctAnswersCount,
       totalCount: quiz.questions.length,
@@ -522,6 +523,51 @@ export const LiveHostView: React.FC<LiveHostViewProps> = ({
             </div>
           </div>
 
+        </div>
+      )}
+
+      {/* ENDED QUIZ SESSION: TOP 5 LEADERSHIP BOARD & RECORDS BANNER */}
+      {session.state === 'ended' && (
+        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-2xl space-y-6">
+          <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-800 pb-4">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-2xl bg-amber-500/20 text-amber-400 border border-amber-500/30 flex items-center justify-center shadow-inner">
+                <Trophy className="w-6 h-6" />
+              </div>
+              <div>
+                <h2 className="text-xl font-extrabold text-white">Quiz Completed — Final Top 5 Leadership Board</h2>
+                <p className="text-xs text-slate-400">All learner records & PRNs saved into database for report generation</p>
+              </div>
+            </div>
+            <span className="bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider flex items-center gap-1.5">
+              <Check className="w-3.5 h-3.5" />
+              Report Saved
+            </span>
+          </div>
+
+          <div className="space-y-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-3">
+              {participantList.slice(0, 5).map((p, idx) => (
+                <div key={p.id} className="bg-slate-950 border border-slate-800 p-4 rounded-xl text-center space-y-2 relative overflow-hidden">
+                  <span className={`text-xl font-black ${
+                    idx === 0 ? 'text-amber-400' : idx === 1 ? 'text-slate-300' : idx === 2 ? 'text-amber-600' : 'text-slate-500'
+                  }`}>
+                    {idx === 0 ? '🥇 #1' : idx === 1 ? '🥈 #2' : idx === 2 ? '🥉 #3' : `#${idx + 1}`}
+                  </span>
+                  <div>
+                    <h4 className="font-extrabold text-white text-sm truncate">{p.name}</h4>
+                    <p className="text-[11px] font-mono text-indigo-400 font-bold truncate">
+                      PRN: {p.prn || 'N/A'}
+                    </p>
+                  </div>
+                  <div className="bg-slate-900 py-1.5 px-2 rounded-lg border border-slate-800">
+                    <p className="text-sm font-mono font-black text-amber-400">{p.score} PTS</p>
+                    <p className="text-[10px] text-slate-500">{p.correctAnswersCount} / {quiz.questions.length} Correct</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       )}
 
