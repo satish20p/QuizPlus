@@ -1,0 +1,6 @@
+{
+  "name": "QuizPulse",
+  "description": "Live interactive quiz & polling platform with real-time host controls, participant countdown timers, automated scoring, instant leaderboard, and report exports.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
