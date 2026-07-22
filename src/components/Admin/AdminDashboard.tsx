@@ -54,7 +54,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const [isAddingUser, setIsAddingUser] = useState(false);
   const [newUserName, setNewUserName] = useState('');
   const [newUserEmail, setNewUserEmail] = useState('');
+  const [newUserPassword, setNewUserPassword] = useState('password123');
   const [newUserRole, setNewUserRole] = useState<'admin' | 'coadmin' | 'trainer' | 'learner'>('trainer');
+  const [createdSuccessMsg, setCreatedSuccessMsg] = useState('');
 
   const filteredUsers = users.filter(u => {
     const matchesSearch = u.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
@@ -68,6 +70,22 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     q.authorName.toLowerCase().includes(searchTerm.toLowerCase()) ||
     q.category.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  const handleOpenAddTrainer = () => {
+    setNewUserRole('trainer');
+    setNewUserName('');
+    setNewUserEmail('');
+    setNewUserPassword('password123');
+    setIsAddingUser(true);
+  };
+
+  const handleOpenAddUser = () => {
+    setNewUserRole('trainer');
+    setNewUserName('');
+    setNewUserEmail('');
+    setNewUserPassword('password123');
+    setIsAddingUser(true);
+  };
 
   const handleCreateUser = (e: React.FormEvent) => {
     e.preventDefault();
@@ -86,8 +104,15 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     const updated = storageService.addUser(newUser);
     onUsersUpdate(updated);
     setIsAddingUser(false);
+    
+    setCreatedSuccessMsg(
+      `Successfully created ${newUserRole.toUpperCase()} account for "${newUser.name}" (${newUser.email})! Password: ${newUserPassword || 'password123'}`
+    );
+    setTimeout(() => setCreatedSuccessMsg(''), 8000);
+
     setNewUserName('');
     setNewUserEmail('');
+    setNewUserPassword('password123');
   };
 
   const handleToggleStatus = (userId: string, currentStatus: string) => {
@@ -302,16 +327,41 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
           </button>
 
           {activeTab === 'users' && (
-            <button
-              onClick={() => setIsAddingUser(true)}
-              className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg text-sm font-semibold shadow-md flex items-center gap-2 transition cursor-pointer ml-auto"
-            >
-              <UserPlus className="w-4 h-4" />
-              Create User Account
-            </button>
+            <div className="flex items-center gap-2 ml-auto">
+              <button
+                onClick={handleOpenAddTrainer}
+                className="bg-indigo-600 hover:bg-indigo-700 text-white px-3.5 py-2 rounded-lg text-xs font-bold shadow-md flex items-center gap-2 transition cursor-pointer"
+              >
+                <GraduationCap className="w-4 h-4 text-amber-300" />
+                + Create Trainer Account
+              </button>
+              <button
+                onClick={handleOpenAddUser}
+                className="bg-emerald-600 hover:bg-emerald-700 text-white px-3.5 py-2 rounded-lg text-xs font-bold shadow-md flex items-center gap-2 transition cursor-pointer"
+              >
+                <UserPlus className="w-4 h-4" />
+                + Create Any Account
+              </button>
+            </div>
           )}
         </div>
       </div>
+
+      {/* SUCCESS NOTIFICATION TOAST */}
+      {createdSuccessMsg && (
+        <div className="p-4 bg-emerald-50 border border-emerald-300 text-emerald-900 rounded-2xl shadow-md flex items-center justify-between text-xs font-medium animate-in fade-in slide-in-from-top-2 duration-300">
+          <div className="flex items-center gap-2.5">
+            <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
+            <span>{createdSuccessMsg}</span>
+          </div>
+          <button 
+            onClick={() => setCreatedSuccessMsg('')}
+            className="text-emerald-700 hover:text-emerald-900 font-bold px-2 py-1 rounded hover:bg-emerald-100 transition cursor-pointer"
+          >
+            Dismiss
+          </button>
+        </div>
+      )}
 
       {/* SEARCH BAR */}
       <div className="relative">
@@ -559,50 +609,87 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       {/* CREATE USER MODAL */}
       {isAddingUser && (
         <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white border border-slate-200 rounded-2xl p-6 max-w-md w-full shadow-2xl space-y-5">
-            <h3 className="text-xl font-bold text-slate-900 flex items-center gap-2">
-              <UserPlus className="w-5 h-5 text-emerald-600" />
-              Create New User Account
-            </h3>
+          <div className="bg-white border border-slate-200 rounded-2xl p-6 max-w-md w-full shadow-2xl space-y-5 animate-in fade-in zoom-in-95 duration-150">
+            <div className="flex items-center gap-3 border-b border-slate-100 pb-3">
+              <div className={`w-10 h-10 rounded-xl flex items-center justify-center border shadow-xs ${
+                newUserRole === 'trainer' ? 'bg-indigo-50 border-indigo-200 text-indigo-600' : 'bg-emerald-50 border-emerald-200 text-emerald-600'
+              }`}>
+                {newUserRole === 'trainer' ? <GraduationCap className="w-5 h-5" /> : <UserPlus className="w-5 h-5" />}
+              </div>
+              <div>
+                <h3 className="text-lg font-extrabold text-slate-900">
+                  {newUserRole === 'trainer' ? 'Create Trainer Account' : 'Create User Account'}
+                </h3>
+                <p className="text-xs text-slate-500 font-medium">
+                  {newUserRole === 'trainer'
+                    ? 'Allow instructor to log in & author quizzes'
+                    : 'Add a new user profile to system'}
+                </p>
+              </div>
+            </div>
 
             <form onSubmit={handleCreateUser} className="space-y-4">
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">Full Name</label>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">Full Name *</label>
                 <input
                   type="text"
                   required
-                  placeholder="e.g. Maria Santos"
+                  placeholder="e.g. Dr. Robert Chen"
                   value={newUserName}
                   onChange={(e) => setNewUserName(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-300 text-slate-900 px-3 py-2 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-600"
+                  className="w-full bg-slate-50 border border-slate-300 text-slate-900 px-3 py-2.5 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-600"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">Email Address</label>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">Email Address *</label>
                 <input
                   type="email"
                   required
-                  placeholder="e.g. maria@corp.com"
+                  placeholder="e.g. robert.chen@quizpulse.com"
                   value={newUserEmail}
                   onChange={(e) => setNewUserEmail(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-300 text-slate-900 px-3 py-2 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-600"
+                  className="w-full bg-slate-50 border border-slate-300 text-slate-900 px-3 py-2.5 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-600"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">Assign User Role *</label>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">Account Role *</label>
                 <select
                   value={newUserRole}
                   onChange={(e: any) => setNewUserRole(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-300 text-slate-900 px-3 py-2 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-600 font-medium"
+                  className="w-full bg-slate-50 border border-slate-300 text-slate-900 px-3 py-2.5 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-600 font-medium"
                 >
+                  <option value="trainer">Trainer (Quiz Author & Live Host)</option>
                   <option value="admin">Admin (System Administrator)</option>
                   <option value="coadmin">Coadmin (Co-Administrator & Management)</option>
-                  <option value="trainer">Trainer (Quiz Author & Host)</option>
                   <option value="learner">Learner (Participant)</option>
                 </select>
               </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">Default Password *</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="password123"
+                  value={newUserPassword}
+                  onChange={(e) => setNewUserPassword(e.target.value)}
+                  className="w-full bg-slate-50 border border-slate-300 text-slate-900 font-mono px-3 py-2.5 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-600"
+                />
+                <p className="text-[11px] text-slate-500 mt-1">
+                  The trainer will use this password to log in at the Trainer Portal.
+                </p>
+              </div>
+
+              {newUserRole === 'trainer' && (
+                <div className="p-3 bg-indigo-50/70 border border-indigo-200 rounded-xl text-xs text-indigo-900 flex items-start gap-2">
+                  <GraduationCap className="w-4 h-4 text-indigo-600 shrink-0 mt-0.5" />
+                  <span>
+                    Trainers created by Admin can log in at the Trainer Login portal to create quizzes and launch live pin sessions.
+                  </span>
+                </div>
+              )}
 
               <div className="flex gap-3 pt-2">
                 <button
@@ -614,9 +701,12 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white py-2.5 rounded-xl text-sm font-semibold transition cursor-pointer shadow-md"
+                  className={`flex-1 text-white py-2.5 rounded-xl text-sm font-semibold transition cursor-pointer shadow-md flex items-center justify-center gap-1.5 ${
+                    newUserRole === 'trainer' ? 'bg-indigo-600 hover:bg-indigo-700' : 'bg-emerald-600 hover:bg-emerald-700'
+                  }`}
                 >
-                  Create Account
+                  {newUserRole === 'trainer' ? <GraduationCap className="w-4 h-4" /> : <UserPlus className="w-4 h-4" />}
+                  <span>{newUserRole === 'trainer' ? 'Create Trainer' : 'Create Account'}</span>
                 </button>
               </div>
             </form>

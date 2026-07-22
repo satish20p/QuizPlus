@@ -19,7 +19,12 @@ import {
   AlertTriangle,
   Lock,
   ShieldCheck,
-  AlertCircle
+  AlertCircle,
+  QrCode,
+  Camera,
+  Link as LinkIcon,
+  X,
+  Scan
 } from 'lucide-react';
 
 interface LearnerInterfaceProps {
@@ -49,6 +54,50 @@ export const LearnerInterface: React.FC<LearnerInterfaceProps> = ({
   const [selectedOptId, setSelectedOptId] = useState<string | null>(null);
   const [hasSubmitted, setHasSubmitted] = useState(false);
   const [deviceFrame, setDeviceFrame] = useState<boolean>(true); // Smartphone Frame toggle for realistic preview
+
+  // QR Code Scanner & URL Paste Modals State
+  const [showQrScannerModal, setShowQrScannerModal] = useState<boolean>(false);
+  const [showUrlPasteModal, setShowUrlPasteModal] = useState<boolean>(false);
+  const [pastedUrlInput, setPastedUrlInput] = useState<string>('');
+  const [isCameraScanning, setIsCameraScanning] = useState<boolean>(false);
+  const [scanMessage, setScanMessage] = useState<string>('');
+
+  const handleParseUrlAndSetPin = (urlOrString: string) => {
+    // Extract 6-digit number sequence or pin parameter
+    const match = urlOrString.match(/pin=(\d{6})/i) || urlOrString.match(/\b(\d{6})\b/);
+    if (match && match[1]) {
+      setPin(match[1]);
+      return match[1];
+    }
+    return null;
+  };
+
+  const handleSimulateQrScan = () => {
+    setIsCameraScanning(true);
+    setScanMessage('Aligning QR Code in viewfinder...');
+    setTimeout(() => {
+      // Auto detected PIN demo or active URL pin
+      const activePin = activePinInput || '829104';
+      setPin(activePin);
+      setScanMessage(`Success! Scanned PIN: ${activePin}`);
+      setTimeout(() => {
+        setIsCameraScanning(false);
+        setShowQrScannerModal(false);
+        setScanMessage('');
+      }, 1000);
+    }, 2000);
+  };
+
+  const handleApplyPastedUrl = (e: React.FormEvent) => {
+    e.preventDefault();
+    const extractedPin = handleParseUrlAndSetPin(pastedUrlInput);
+    if (extractedPin) {
+      setShowUrlPasteModal(false);
+      setPastedUrlInput('');
+    } else {
+      alert('Could not find a valid 6-digit PIN in the provided URL/string. Please try again or type the 6-digit PIN manually.');
+    }
+  };
 
   // Security & Anti-Cheat State
   const [violationCount, setViolationCount] = useState<number>(0);
@@ -271,17 +320,54 @@ export const LearnerInterface: React.FC<LearnerInterfaceProps> = ({
 
         {/* SECTION 1: JOIN ROOM SCREEN */}
         {(!session || !quiz) && (
-          <div className="space-y-6 pt-6 text-center my-auto">
-            <div className="w-16 h-16 mx-auto rounded-2xl bg-indigo-50 text-indigo-600 border border-indigo-200 flex items-center justify-center shadow-sm">
-              <Smartphone className="w-8 h-8" />
+          <div className="space-y-5 pt-4 text-center my-auto">
+            <div className="w-14 h-14 mx-auto rounded-2xl bg-indigo-50 text-indigo-600 border border-indigo-200 flex items-center justify-center shadow-xs">
+              <Smartphone className="w-7 h-7" />
             </div>
 
             <div>
-              <h2 className="text-2xl font-black text-slate-900">Join Live Quiz</h2>
-              <p className="text-xs text-slate-500 mt-1">Enter PIN code from presenter screen</p>
+              <span className="inline-flex items-center gap-1 text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 px-2.5 py-0.5 rounded-full mb-1">
+                <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                No Login Required for Learners
+              </span>
+              <h2 className="text-xl font-black text-slate-900">Join Live Quiz</h2>
+              <p className="text-xs text-slate-500 mt-0.5">Use PIN code, QR Scanner, or direct web link</p>
             </div>
 
-            <form onSubmit={handleJoin} className="space-y-4 text-left">
+            {/* QUICK ALTERNATIVE JOIN METHODS: QR & LINK */}
+            <div className="grid grid-cols-2 gap-2 text-left">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowQrScannerModal(true);
+                  handleSimulateQrScan();
+                }}
+                className="p-2.5 rounded-xl border border-indigo-200 bg-indigo-50/70 hover:bg-indigo-100 text-indigo-900 text-xs font-bold flex flex-col items-center justify-center gap-1 transition cursor-pointer"
+              >
+                <Camera className="w-5 h-5 text-indigo-600" />
+                <span>Scan QR Code</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setShowUrlPasteModal(true)}
+                className="p-2.5 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-800 text-xs font-bold flex flex-col items-center justify-center gap-1 transition cursor-pointer"
+              >
+                <LinkIcon className="w-5 h-5 text-indigo-600" />
+                <span>Paste Web Link</span>
+              </button>
+            </div>
+
+            <div className="relative my-2">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-slate-200"></div>
+              </div>
+              <div className="relative flex justify-center text-[10px] uppercase font-bold">
+                <span className="bg-white px-2 text-slate-400">or enter pin manually</span>
+              </div>
+            </div>
+
+            <form onSubmit={handleJoin} className="space-y-3.5 text-left">
               <div>
                 <label className="block text-xs font-semibold text-slate-700 mb-1">6-Digit Session PIN</label>
                 <input
@@ -290,7 +376,7 @@ export const LearnerInterface: React.FC<LearnerInterfaceProps> = ({
                   placeholder="e.g. 829104"
                   value={pin}
                   onChange={(e) => setPin(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-300 text-slate-900 font-mono text-center tracking-widest font-bold px-3 py-3 rounded-xl text-lg focus:outline-none focus:ring-2 focus:ring-indigo-600 uppercase placeholder:text-slate-400"
+                  className="w-full bg-slate-50 border border-slate-300 text-slate-900 font-mono text-center tracking-widest font-bold px-3 py-2.5 rounded-xl text-lg focus:outline-none focus:ring-2 focus:ring-indigo-600 uppercase placeholder:text-slate-400"
                   maxLength={6}
                 />
               </div>
@@ -303,7 +389,7 @@ export const LearnerInterface: React.FC<LearnerInterfaceProps> = ({
                   placeholder="e.g. Marcus Vance"
                   value={guestName}
                   onChange={(e) => setGuestName(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-300 text-slate-900 px-3 py-2.5 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-600"
+                  className="w-full bg-slate-50 border border-slate-300 text-slate-900 px-3 py-2 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-600"
                 />
               </div>
 
@@ -317,7 +403,7 @@ export const LearnerInterface: React.FC<LearnerInterfaceProps> = ({
                   placeholder="e.g. 2024018290"
                   value={prn}
                   onChange={(e) => setPrn(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-300 text-slate-900 font-mono px-3 py-2.5 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-600"
+                  className="w-full bg-slate-50 border border-slate-300 text-slate-900 font-mono px-3 py-2 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-600"
                 />
               </div>
 
@@ -329,6 +415,16 @@ export const LearnerInterface: React.FC<LearnerInterfaceProps> = ({
                 ENTER LOBBY
               </button>
             </form>
+
+            <div className="p-2.5 bg-amber-50/80 border border-amber-200 rounded-xl text-[11px] text-amber-900 text-left space-y-1">
+              <p className="font-bold flex items-center gap-1 text-amber-950">
+                <AlertCircle className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+                Vercel Deployment Notice:
+              </p>
+              <p className="text-[10px] text-amber-800 leading-tight">
+                If scanning the QR code asks for a Vercel login, disable <span className="font-bold">"Vercel Authentication"</span> under Vercel Settings → Deployment Protection. Learners need NO login to participate.
+              </p>
+            </div>
           </div>
         )}
 
@@ -676,6 +772,114 @@ export const LearnerInterface: React.FC<LearnerInterfaceProps> = ({
               <ShieldCheck className="w-4 h-4" />
               I Understand & Resume Quiz
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* QR CODE CAMERA SCANNER MODAL */}
+      {showQrScannerModal && (
+        <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <div className="bg-white rounded-3xl p-6 max-w-sm w-full shadow-2xl space-y-5 text-center relative overflow-hidden border border-slate-200">
+            <button
+              onClick={() => {
+                setShowQrScannerModal(false);
+                setIsCameraScanning(false);
+              }}
+              className="absolute top-4 right-4 text-slate-400 hover:text-slate-700 bg-slate-100 p-1.5 rounded-full transition cursor-pointer"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            <div>
+              <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-700 bg-indigo-50 px-2.5 py-1 rounded-full border border-indigo-200">
+                Camera QR Viewfinder
+              </span>
+              <h3 className="text-lg font-black text-slate-900 mt-2">Scan Quiz QR Code</h3>
+              <p className="text-xs text-slate-500">Hold camera steady over presenter QR code</p>
+            </div>
+
+            {/* Simulated Live Camera Frame */}
+            <div className="w-56 h-56 mx-auto bg-slate-900 rounded-2xl relative overflow-hidden border-2 border-indigo-500 flex items-center justify-center shadow-inner">
+              <div className="absolute inset-4 border-2 border-dashed border-indigo-400/60 rounded-xl pointer-events-none"></div>
+              
+              {/* Corner Reticles */}
+              <div className="absolute top-2 left-2 w-4 h-4 border-t-2 border-l-2 border-indigo-400"></div>
+              <div className="absolute top-2 right-2 w-4 h-4 border-t-2 border-r-2 border-indigo-400"></div>
+              <div className="absolute bottom-2 left-2 w-4 h-4 border-b-2 border-l-2 border-indigo-400"></div>
+              <div className="absolute bottom-2 right-2 w-4 h-4 border-b-2 border-r-2 border-indigo-400"></div>
+
+              {/* Laser Scan Line */}
+              {isCameraScanning && (
+                <div className="absolute w-full h-1 bg-red-500 shadow-[0_0_12px_#ef4444] animate-pulse top-1/2 left-0"></div>
+              )}
+
+              <QrCode className="w-20 h-20 text-indigo-400/40" />
+
+              {/* Status Badge */}
+              <div className="absolute bottom-3 left-3 right-3 bg-slate-950/80 backdrop-blur-xs text-[11px] font-mono text-indigo-300 py-1 px-2 rounded-lg border border-indigo-500/30 font-bold">
+                {scanMessage || 'Searching for QR Code...'}
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <button
+                type="button"
+                onClick={handleSimulateQrScan}
+                disabled={isCameraScanning}
+                className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold py-3 rounded-xl text-xs shadow-md transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+              >
+                <Scan className="w-4 h-4 animate-spin" />
+                {isCameraScanning ? 'Scanning QR Code...' : 'Rescan QR Code'}
+              </button>
+
+              <p className="text-[11px] text-slate-500 font-medium">
+                PIN code will automatically auto-fill into the join box upon scan.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* PASTE WEB LINK MODAL */}
+      {showUrlPasteModal && (
+        <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <div className="bg-white rounded-3xl p-6 max-w-sm w-full shadow-2xl space-y-4 text-center relative border border-slate-200">
+            <button
+              onClick={() => setShowUrlPasteModal(false)}
+              className="absolute top-4 right-4 text-slate-400 hover:text-slate-700 bg-slate-100 p-1.5 rounded-full transition cursor-pointer"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            <div className="w-12 h-12 mx-auto rounded-2xl bg-indigo-50 text-indigo-600 border border-indigo-200 flex items-center justify-center">
+              <LinkIcon className="w-6 h-6" />
+            </div>
+
+            <div>
+              <h3 className="text-lg font-black text-slate-900">Paste Invitation Web Link</h3>
+              <p className="text-xs text-slate-500 mt-1">Paste URL link shared by instructor/trainer</p>
+            </div>
+
+            <form onSubmit={handleApplyPastedUrl} className="space-y-3 text-left">
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">Web Link / Invitation URL</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. https://quizpulse.app/?pin=829104"
+                  value={pastedUrlInput}
+                  onChange={(e) => setPastedUrlInput(e.target.value)}
+                  className="w-full bg-slate-50 border border-slate-300 text-slate-900 px-3 py-2.5 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-indigo-600 font-mono"
+                />
+              </div>
+
+              <button
+                type="submit"
+                className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold py-3 rounded-xl text-xs shadow-md transition cursor-pointer flex items-center justify-center gap-2"
+              >
+                Extract PIN & Join
+              </button>
+            </form>
           </div>
         </div>
       )}

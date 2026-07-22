@@ -81,15 +81,20 @@ export const LiveStageView: React.FC<LiveStageViewProps> = ({
         </div>
 
         {/* Big Join Box */}
-        <div className="bg-slate-50 border border-slate-200 p-4 rounded-2xl flex items-center gap-6 shrink-0 shadow-sm">
-          <div className="p-2 bg-white rounded-xl border border-slate-200 shadow-sm">
-            <QRCodeSVG value={joinUrl} size={80} />
+        <div className="bg-slate-50 border border-slate-200 p-4 rounded-2xl flex flex-col gap-2 shrink-0 shadow-sm">
+          <div className="flex items-center gap-6">
+            <div className="p-2 bg-white rounded-xl border border-slate-200 shadow-sm">
+              <QRCodeSVG value={joinUrl} size={80} />
+            </div>
+            <div>
+              <p className="text-xs text-slate-500 uppercase font-bold tracking-wider">Join at {window.location.host}</p>
+              <p className="text-xs text-slate-500 font-semibold mt-0.5">PIN CODE:</p>
+              <p className="text-3xl font-mono font-black text-indigo-700 tracking-wider">{session.pin}</p>
+            </div>
           </div>
-          <div>
-            <p className="text-xs text-slate-500 uppercase font-bold tracking-wider">Join at {window.location.host}</p>
-            <p className="text-xs text-slate-500 font-semibold mt-0.5">PIN CODE:</p>
-            <p className="text-3xl font-mono font-black text-indigo-700 tracking-wider">{session.pin}</p>
-          </div>
+          <p className="text-[10px] text-slate-500 max-w-xs font-medium border-t border-slate-200 pt-1.5 mt-1">
+            ⚡ <span className="font-bold text-slate-700">Vercel Deployment Tip:</span> In Vercel Settings → <code className="bg-slate-200 px-1 rounded">Deployment Protection</code>, disable Vercel Authentication so learners can join directly without Vercel logins.
+          </p>
         </div>
       </div>
 

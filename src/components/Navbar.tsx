@@ -19,6 +19,8 @@ interface NavbarProps {
   onViewChange: (view: 'admin' | 'trainer' | 'learner' | 'presenter') => void;
   onJoinSession: (pin: string) => void;
   activeSessionPin?: string | null;
+  isTrainerLoggedIn?: boolean;
+  onTrainerLogout?: () => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -29,6 +31,8 @@ export const Navbar: React.FC<NavbarProps> = ({
   onViewChange,
   onJoinSession,
   activeSessionPin,
+  isTrainerLoggedIn = false,
+  onTrainerLogout,
 }) => {
   const [pinInput, setPinInput] = useState('');
 
@@ -87,16 +91,19 @@ export const Navbar: React.FC<NavbarProps> = ({
           {/* Role View Switcher Navigation */}
           <nav className="flex items-center bg-slate-100 p-1 rounded-xl border border-slate-200 text-xs font-semibold">
             <button
-              onClick={() => onViewChange('admin')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition cursor-pointer ${
-                activeView === 'admin' 
+              onClick={() => onViewChange('learner')}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition cursor-pointer relative ${
+                activeView === 'learner' 
                   ? 'bg-indigo-600 text-white shadow-sm font-bold' 
                   : 'text-slate-700 hover:text-slate-900 hover:bg-white/80'
               }`}
-              title="Admin Portal"
+              title="Learner Interface (No Login Required)"
             >
-              <ShieldCheck className="w-4 h-4 text-amber-500" />
-              <span className="hidden lg:inline">Admin</span>
+              <Smartphone className="w-4 h-4 text-emerald-500 shrink-0" />
+              <span className="inline">Learner</span>
+              {activeSessionPin && (
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping absolute -top-0.5 -right-0.5"></span>
+              )}
             </button>
 
             <button
@@ -106,26 +113,23 @@ export const Navbar: React.FC<NavbarProps> = ({
                   ? 'bg-indigo-600 text-white shadow-sm font-bold' 
                   : 'text-slate-700 hover:text-slate-900 hover:bg-white/80'
               }`}
-              title="Trainer Portal"
+              title="Trainer Portal (Login Required)"
             >
-              <GraduationCap className="w-4 h-4 text-indigo-600" />
-              <span className="hidden lg:inline">Trainer</span>
+              <GraduationCap className="w-4 h-4 text-indigo-500 shrink-0" />
+              <span className="inline">Trainer</span>
             </button>
 
             <button
-              onClick={() => onViewChange('learner')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition cursor-pointer relative ${
-                activeView === 'learner' 
+              onClick={() => onViewChange('admin')}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition cursor-pointer ${
+                activeView === 'admin' 
                   ? 'bg-indigo-600 text-white shadow-sm font-bold' 
                   : 'text-slate-700 hover:text-slate-900 hover:bg-white/80'
               }`}
-              title="Learner Mobile Interface"
+              title="Admin Console (Login Required)"
             >
-              <Smartphone className="w-4 h-4 text-emerald-600" />
-              <span className="hidden lg:inline">Learner</span>
-              {activeSessionPin && (
-                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping absolute -top-0.5 -right-0.5"></span>
-              )}
+              <ShieldCheck className="w-4 h-4 text-amber-500 shrink-0" />
+              <span className="hidden sm:inline">Admin</span>
             </button>
 
             <button
@@ -137,56 +141,38 @@ export const Navbar: React.FC<NavbarProps> = ({
               }`}
               title="Live Stage / Screen View"
             >
-              <Tv className="w-4 h-4 text-purple-600" />
-              <span className="hidden lg:inline">Live Stage</span>
+              <Tv className="w-4 h-4 text-purple-500 shrink-0" />
+              <span className="hidden md:inline">Live Stage</span>
             </button>
           </nav>
 
-          {/* User Account Switcher */}
+          {/* User Account & Trainer Login Status */}
           <div className="flex items-center gap-2">
-            <div className="relative group">
-              <button className="flex items-center gap-2.5 bg-slate-50 hover:bg-slate-100 px-2.5 py-1.5 rounded-xl border border-slate-200 transition text-left cursor-pointer">
-                <img
-                  src={currentUser.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80'}
-                  alt={currentUser.name}
-                  className="w-7 h-7 rounded-full object-cover border border-slate-300"
-                />
-                <div className="hidden sm:block text-xs">
-                  <p className="font-bold text-slate-900 leading-tight">{currentUser.name}</p>
-                  <p className="text-[10px] text-indigo-700 font-semibold capitalize flex items-center gap-1">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-600"></span>
-                    {currentUser.role}
-                  </p>
-                </div>
-              </button>
-
-              {/* User Dropdown Selector */}
-              <div className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-xl border border-slate-200 p-1 hidden group-hover:block z-50">
-                <div className="px-3 py-2 border-b border-slate-100">
-                  <p className="text-xs text-slate-500 font-semibold">Switch Active Profile:</p>
-                </div>
-                <div className="max-h-60 overflow-y-auto py-1">
-                  {allUsers.map((u) => (
-                    <button
-                      key={u.id}
-                      onClick={() => onUserChange(u)}
-                      className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs text-left transition cursor-pointer ${
-                        u.id === currentUser.id 
-                          ? 'bg-indigo-50 text-indigo-700 font-bold border border-indigo-200' 
-                          : 'text-slate-700 hover:bg-slate-100 hover:text-slate-900'
-                      }`}
-                    >
-                      <img src={u.avatar} alt={u.name} className="w-6 h-6 rounded-full object-cover" />
-                      <div className="flex-1 min-w-0">
-                        <p className="truncate font-semibold">{u.name}</p>
-                        <p className="text-[10px] text-slate-500 capitalize">{u.role}</p>
-                      </div>
-                      {u.id === currentUser.id && <UserCheck className="w-4 h-4 text-emerald-600" />}
-                    </button>
-                  ))}
-                </div>
+            {isTrainerLoggedIn ? (
+              <div className="flex items-center gap-2">
+                <span className="hidden sm:inline-flex items-center gap-1 text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 px-2.5 py-1 rounded-lg">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 animate-pulse"></span>
+                  Trainer Logged In
+                </span>
+                {onTrainerLogout && (
+                  <button
+                    onClick={onTrainerLogout}
+                    className="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold px-2.5 py-1.5 rounded-xl border border-slate-200 transition cursor-pointer"
+                    title="Sign Out Trainer"
+                  >
+                    Logout
+                  </button>
+                )}
               </div>
-            </div>
+            ) : (
+              <button
+                onClick={() => onViewChange('trainer')}
+                className="flex items-center gap-1 text-xs bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold px-3 py-1.5 rounded-xl border border-indigo-200 transition cursor-pointer"
+              >
+                <GraduationCap className="w-3.5 h-3.5" />
+                Trainer Login
+              </button>
+            )}
           </div>
 
         </div>

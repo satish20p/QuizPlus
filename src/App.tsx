@@ -8,6 +8,7 @@ import { LiveHostView } from './components/Trainer/LiveHostView';
 import { LearnerInterface } from './components/Learner/LearnerInterface';
 import { LiveStageView } from './components/Presenter/LiveStageView';
 import { ReportViewerModal } from './components/Reports/ReportViewerModal';
+import { TrainerLogin } from './components/Auth/TrainerLogin';
 
 export default function App() {
   const [users, setUsers] = useState<User[]>([]);
@@ -16,8 +17,11 @@ export default function App() {
   const [reports, setReports] = useState<SessionReport[]>([]);
   const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
 
-  // Active view: 'admin' | 'trainer' | 'learner' | 'presenter'
-  const [activeView, setActiveView] = useState<'admin' | 'trainer' | 'learner' | 'presenter'>('trainer');
+  // Trainer authentication state
+  const [isTrainerLoggedIn, setIsTrainerLoggedIn] = useState<boolean>(false);
+
+  // Active view: 'admin' | 'trainer' | 'learner' | 'presenter' (Default is 'learner' for QR code / link visitors)
+  const [activeView, setActiveView] = useState<'admin' | 'trainer' | 'learner' | 'presenter'>('learner');
 
   // Active live session state
   const [activeSession, setActiveSession] = useState<LiveSession | null>(null);
@@ -44,14 +48,21 @@ export default function App() {
     const loadedLogs = storageService.getAuditLogs();
     setAuditLogs(loadedLogs);
 
-    // Check URL query param for ?pin=XXXXXX&name=...&prn=...
-    const params = new URLSearchParams(window.location.search);
-    const pinParam = params.get('pin');
-    const nameParam = params.get('name') || loadedUsers[3]?.name || 'Guest Participant';
-    const prnParam = params.get('prn') || '';
-    if (pinParam) {
-      handleJoinSessionByPin(pinParam, nameParam, prnParam);
+    // Check URL query param or hash for ?pin=XXXXXX / ?code=XXXXXX / #pin=XXXXXX
+    const searchParams = new URLSearchParams(window.location.search);
+    const hashString = window.location.hash;
+    const extractedPin = 
+      searchParams.get('pin') || 
+      searchParams.get('code') || 
+      searchParams.get('join') || 
+      (hashString.match(/\b(\d{6})\b/)?.[1] || null);
+
+    const nameParam = searchParams.get('name') || 'Guest Participant';
+    const prnParam = searchParams.get('prn') || '';
+
+    if (extractedPin) {
       setActiveView('learner');
+      handleJoinSessionByPin(extractedPin, nameParam, prnParam);
     }
   }, []);
 
@@ -189,20 +200,37 @@ export default function App() {
     setAuditLogs(storageService.getAuditLogs());
   };
 
-  if (!currentUser) return null;
+  const handleTrainerLogin = (authenticatedUser: User) => {
+    setCurrentUser(authenticatedUser);
+    setIsTrainerLoggedIn(true);
+  };
+
+  const handleTrainerLogout = () => {
+    setIsTrainerLoggedIn(false);
+    setActiveView('learner');
+  };
+
+  const fallbackUser: User = currentUser || users[0] || {
+    id: 'guest-learner',
+    name: 'Learner',
+    email: 'learner@quizpulse.com',
+    role: 'learner'
+  };
 
   return (
     <div className="min-h-screen bg-slate-100 text-slate-900 font-sans selection:bg-indigo-600 selection:text-white">
       
       {/* Top Navbar */}
       <Navbar
-        currentUser={currentUser}
+        currentUser={fallbackUser}
         onUserChange={(u) => setCurrentUser(u)}
         allUsers={users}
         activeView={activeView}
         onViewChange={(v) => setActiveView(v)}
-        onJoinSession={(pin) => handleJoinSessionByPin(pin, currentUser.name)}
+        onJoinSession={(pin) => handleJoinSessionByPin(pin, fallbackUser.name)}
         activeSessionPin={activeSession?.pin}
+        isTrainerLoggedIn={isTrainerLoggedIn}
+        onTrainerLogout={handleTrainerLogout}
       />
 
       {/* Main Workspace Body */}
@@ -210,43 +238,59 @@ export default function App() {
         
         {/* ADMIN VIEW */}
         {activeView === 'admin' && (
-          <AdminDashboard
-            currentUser={currentUser}
-            users={users}
-            onUsersUpdate={(updated) => setUsers(updated)}
-            quizzes={quizzes}
-            onQuizzesUpdate={(updated) => setQuizzes(updated)}
-            reports={reports}
-            auditLogs={auditLogs}
-            onViewReport={(rep) => setSelectedReport(rep)}
-          />
+          !isTrainerLoggedIn ? (
+            <TrainerLogin
+              allUsers={users}
+              onLoginSuccess={handleTrainerLogin}
+              onCancelToLearner={() => setActiveView('learner')}
+            />
+          ) : (
+            <AdminDashboard
+              currentUser={fallbackUser}
+              users={users}
+              onUsersUpdate={(updated) => setUsers(updated)}
+              quizzes={quizzes}
+              onQuizzesUpdate={(updated) => setQuizzes(updated)}
+              reports={reports}
+              auditLogs={auditLogs}
+              onViewReport={(rep) => setSelectedReport(rep)}
+            />
+          )
         )}
 
         {/* TRAINER VIEW */}
         {activeView === 'trainer' && (
-          activeSession && activeQuiz && activeSession.trainerId === currentUser.id ? (
-            <LiveHostView
-              session={activeSession}
-              quiz={activeQuiz}
-              onUpdateSession={handleUpdateSession}
-              onEndSession={handleEndSession}
+          !isTrainerLoggedIn ? (
+            <TrainerLogin
+              allUsers={users}
+              onLoginSuccess={handleTrainerLogin}
+              onCancelToLearner={() => setActiveView('learner')}
             />
           ) : (
-            <TrainerPortal
-              currentUser={currentUser}
-              quizzes={quizzes}
-              onQuizzesUpdate={(updated) => setQuizzes(updated)}
-              reports={reports}
-              onLaunchSession={handleLaunchSession}
-              onViewReport={(rep) => setSelectedReport(rep)}
-            />
+            activeSession && activeQuiz && activeSession.trainerId === fallbackUser.id ? (
+              <LiveHostView
+                session={activeSession}
+                quiz={activeQuiz}
+                onUpdateSession={handleUpdateSession}
+                onEndSession={handleEndSession}
+              />
+            ) : (
+              <TrainerPortal
+                currentUser={fallbackUser}
+                quizzes={quizzes}
+                onQuizzesUpdate={(updated) => setQuizzes(updated)}
+                reports={reports}
+                onLaunchSession={handleLaunchSession}
+                onViewReport={(rep) => setSelectedReport(rep)}
+              />
+            )
           )
         )}
 
         {/* LEARNER VIEW */}
         {activeView === 'learner' && (
           <LearnerInterface
-            currentUser={currentUser}
+            currentUser={fallbackUser}
             session={activeSession}
             quiz={activeQuiz}
             onJoinByPin={handleJoinSessionByPin}
