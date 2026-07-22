@@ -24,7 +24,9 @@ import {
   Camera,
   Link as LinkIcon,
   X,
-  Scan
+  Scan,
+  ArrowRight,
+  Edit2
 } from 'lucide-react';
 
 interface LearnerInterfaceProps {
@@ -48,9 +50,11 @@ export const LearnerInterface: React.FC<LearnerInterfaceProps> = ({
   const urlPrn = searchParams.get('prn') || '';
   const urlName = searchParams.get('name') || currentUser.name || '';
 
-  const [pin, setPin] = useState(activePinInput || searchParams.get('pin') || '');
+  const initialPin = activePinInput || searchParams.get('pin') || '';
+  const [pin, setPin] = useState(initialPin);
   const [guestName, setGuestName] = useState(urlName);
   const [prn, setPrn] = useState(urlPrn);
+  const [joinStep, setJoinStep] = useState<1 | 2>(initialPin.trim().length >= 4 ? 2 : 1);
   const [selectedOptId, setSelectedOptId] = useState<string | null>(null);
   const [hasSubmitted, setHasSubmitted] = useState(false);
   const [deviceFrame, setDeviceFrame] = useState<boolean>(true); // Smartphone Frame toggle for realistic preview
@@ -67,6 +71,7 @@ export const LearnerInterface: React.FC<LearnerInterfaceProps> = ({
     const match = urlOrString.match(/pin=(\d{6})/i) || urlOrString.match(/\b(\d{6})\b/);
     if (match && match[1]) {
       setPin(match[1]);
+      setJoinStep(2); // Automatically advance to Step 2: Name & PRN
       return match[1];
     }
     return null;
@@ -79,6 +84,7 @@ export const LearnerInterface: React.FC<LearnerInterfaceProps> = ({
       // Auto detected PIN demo or active URL pin
       const activePin = activePinInput || '829104';
       setPin(activePin);
+      setJoinStep(2); // Automatically advance to Step 2: Name & PRN
       setScanMessage(`Success! Scanned PIN: ${activePin}`);
       setTimeout(() => {
         setIsCameraScanning(false);
@@ -320,9 +326,9 @@ export const LearnerInterface: React.FC<LearnerInterfaceProps> = ({
 
         {/* SECTION 1: JOIN ROOM SCREEN */}
         {(!session || !quiz) && (
-          <div className="space-y-5 pt-4 text-center my-auto">
-            <div className="w-14 h-14 mx-auto rounded-2xl bg-indigo-50 text-indigo-600 border border-indigo-200 flex items-center justify-center shadow-xs">
-              <Smartphone className="w-7 h-7" />
+          <div className="space-y-4 pt-2 text-center my-auto">
+            <div className="w-12 h-12 mx-auto rounded-2xl bg-indigo-50 text-indigo-600 border border-indigo-200 flex items-center justify-center shadow-xs">
+              <Smartphone className="w-6 h-6" />
             </div>
 
             <div>
@@ -331,90 +337,148 @@ export const LearnerInterface: React.FC<LearnerInterfaceProps> = ({
                 No Login Required for Learners
               </span>
               <h2 className="text-xl font-black text-slate-900">Join Live Quiz</h2>
-              <p className="text-xs text-slate-500 mt-0.5">Use PIN code, QR Scanner, or direct web link</p>
+              <p className="text-xs text-slate-500 mt-0.5">
+                {joinStep === 1 
+                  ? 'Step 1 of 2: Scan QR, paste URL, or enter PIN' 
+                  : 'Step 2 of 2: Enter Name & PRN to enter lobby'}
+              </p>
             </div>
 
-            {/* QUICK ALTERNATIVE JOIN METHODS: QR & LINK */}
-            <div className="grid grid-cols-2 gap-2 text-left">
-              <button
-                type="button"
-                onClick={() => {
-                  setShowQrScannerModal(true);
-                  handleSimulateQrScan();
-                }}
-                className="p-2.5 rounded-xl border border-indigo-200 bg-indigo-50/70 hover:bg-indigo-100 text-indigo-900 text-xs font-bold flex flex-col items-center justify-center gap-1 transition cursor-pointer"
-              >
-                <Camera className="w-5 h-5 text-indigo-600" />
-                <span>Scan QR Code</span>
-              </button>
+            {/* STEP 1: SCAN QR / PASTE URL / ENTER PIN */}
+            {joinStep === 1 && (
+              <div className="space-y-4">
+                {/* QUICK ALTERNATIVE JOIN METHODS: QR & LINK */}
+                <div className="grid grid-cols-2 gap-2 text-left">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowQrScannerModal(true);
+                      handleSimulateQrScan();
+                    }}
+                    className="p-3 rounded-2xl border border-indigo-200 bg-indigo-50/80 hover:bg-indigo-100 text-indigo-950 text-xs font-bold flex flex-col items-center justify-center gap-1.5 transition cursor-pointer shadow-xs hover:shadow-md"
+                  >
+                    <div className="p-2 rounded-xl bg-indigo-600 text-white shadow-xs">
+                      <Camera className="w-5 h-5" />
+                    </div>
+                    <span className="font-extrabold">1. Scan QR Code</span>
+                    <span className="text-[10px] text-indigo-700 font-normal">Auto-detects Quiz PIN</span>
+                  </button>
 
-              <button
-                type="button"
-                onClick={() => setShowUrlPasteModal(true)}
-                className="p-2.5 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-800 text-xs font-bold flex flex-col items-center justify-center gap-1 transition cursor-pointer"
-              >
-                <LinkIcon className="w-5 h-5 text-indigo-600" />
-                <span>Paste Web Link</span>
-              </button>
-            </div>
+                  <button
+                    type="button"
+                    onClick={() => setShowUrlPasteModal(true)}
+                    className="p-3 rounded-2xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-900 text-xs font-bold flex flex-col items-center justify-center gap-1.5 transition cursor-pointer shadow-xs hover:shadow-md"
+                  >
+                    <div className="p-2 rounded-xl bg-slate-800 text-white shadow-xs">
+                      <LinkIcon className="w-5 h-5" />
+                    </div>
+                    <span className="font-extrabold">Paste Web Link</span>
+                    <span className="text-[10px] text-slate-500 font-normal">Extracts PIN from URL</span>
+                  </button>
+                </div>
 
-            <div className="relative my-2">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-slate-200"></div>
+                <div className="relative my-2">
+                  <div className="absolute inset-0 flex items-center">
+                    <div className="w-full border-t border-slate-200"></div>
+                  </div>
+                  <div className="relative flex justify-center text-[10px] uppercase font-bold">
+                    <span className="bg-white px-2 text-slate-400">or enter pin code manually</span>
+                  </div>
+                </div>
+
+                <form 
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    if (pin.trim().length >= 4) {
+                      setJoinStep(2);
+                    } else {
+                      alert('Please enter a valid 6-digit PIN code.');
+                    }
+                  }} 
+                  className="space-y-3 text-left"
+                >
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">6-Digit Session PIN</label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="e.g. 829104"
+                      value={pin}
+                      onChange={(e) => setPin(e.target.value)}
+                      className="w-full bg-slate-50 border border-slate-300 text-slate-900 font-mono text-center tracking-widest font-black px-3 py-3 rounded-xl text-xl focus:outline-none focus:ring-2 focus:ring-indigo-600 uppercase placeholder:text-slate-300 shadow-inner"
+                      maxLength={6}
+                    />
+                  </div>
+
+                  <button
+                    type="submit"
+                    className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold py-3 rounded-xl text-xs shadow-md flex items-center justify-center gap-2 transition cursor-pointer"
+                  >
+                    <span>NEXT: ENTER DETAILS</span>
+                    <ArrowRight className="w-4 h-4" />
+                  </button>
+                </form>
               </div>
-              <div className="relative flex justify-center text-[10px] uppercase font-bold">
-                <span className="bg-white px-2 text-slate-400">or enter pin manually</span>
-              </div>
-            </div>
+            )}
 
-            <form onSubmit={handleJoin} className="space-y-3.5 text-left">
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">6-Digit Session PIN</label>
-                <input
-                  type="text"
-                  required
-                  placeholder="e.g. 829104"
-                  value={pin}
-                  onChange={(e) => setPin(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-300 text-slate-900 font-mono text-center tracking-widest font-bold px-3 py-2.5 rounded-xl text-lg focus:outline-none focus:ring-2 focus:ring-indigo-600 uppercase placeholder:text-slate-400"
-                  maxLength={6}
-                />
-              </div>
+            {/* STEP 2: ENTER NAME & PRN */}
+            {joinStep === 2 && (
+              <div className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-200">
+                {/* Verified PIN banner with change option */}
+                <div className="p-2.5 bg-indigo-50 border border-indigo-200 rounded-xl flex items-center justify-between text-left">
+                  <div>
+                    <span className="text-[10px] font-bold uppercase text-indigo-600">Quiz PIN Code:</span>
+                    <p className="text-base font-black font-mono text-indigo-950 tracking-wider">{pin || '829104'}</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setJoinStep(1)}
+                    className="text-xs font-bold text-indigo-700 hover:text-indigo-900 bg-white border border-indigo-200 px-2.5 py-1 rounded-lg flex items-center gap-1 transition cursor-pointer shadow-2xs"
+                  >
+                    <Edit2 className="w-3 h-3" />
+                    Change PIN
+                  </button>
+                </div>
 
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">Learner Full Name</label>
-                <input
-                  type="text"
-                  required
-                  placeholder="e.g. Marcus Vance"
-                  value={guestName}
-                  onChange={(e) => setGuestName(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-300 text-slate-900 px-3 py-2 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-600"
-                />
-              </div>
+                <form onSubmit={handleJoin} className="space-y-3 text-left">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">
+                      Learner Full Name <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="e.g. Marcus Vance"
+                      value={guestName}
+                      onChange={(e) => setGuestName(e.target.value)}
+                      className="w-full bg-slate-50 border border-slate-300 text-slate-900 px-3 py-2.5 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-600 font-medium"
+                    />
+                  </div>
 
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">
-                  PRN / Roll Number <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  required
-                  placeholder="e.g. 2024018290"
-                  value={prn}
-                  onChange={(e) => setPrn(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-300 text-slate-900 font-mono px-3 py-2 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-600"
-                />
-              </div>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">
+                      PRN / Roll Number / Student ID <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="e.g. 2024018290"
+                      value={prn}
+                      onChange={(e) => setPrn(e.target.value)}
+                      className="w-full bg-slate-50 border border-slate-300 text-slate-900 font-mono px-3 py-2.5 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-600"
+                    />
+                  </div>
 
-              <button
-                type="submit"
-                className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold py-3 rounded-xl text-sm shadow-md flex items-center justify-center gap-2 transition cursor-pointer"
-              >
-                <Send className="w-4 h-4" />
-                ENTER LOBBY
-              </button>
-            </form>
+                  <button
+                    type="submit"
+                    className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold py-3.5 rounded-xl text-sm shadow-md flex items-center justify-center gap-2 transition cursor-pointer"
+                  >
+                    <Send className="w-4 h-4" />
+                    ENTER LOBBY & JOIN QUIZ
+                  </button>
+                </form>
+              </div>
+            )}
 
             <div className="p-2.5 bg-amber-50/80 border border-amber-200 rounded-xl text-[11px] text-amber-900 text-left space-y-1">
               <p className="font-bold flex items-center gap-1 text-amber-950">
