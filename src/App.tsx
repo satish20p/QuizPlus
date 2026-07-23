@@ -67,6 +67,38 @@ export default function App() {
     }
   }, []);
 
+  // Sync activeQuiz when activeSession changes
+  useEffect(() => {
+    if (activeSession?.quizId) {
+      const loadedQuizzes = storageService.getQuizzes();
+      const found = loadedQuizzes.find(q => q.id === activeSession.quizId) || null;
+      if (found) {
+        setActiveQuiz(found);
+      }
+    }
+  }, [activeSession?.quizId]);
+
+  // Polling fallback sync interval for active sessions across tabs / devices
+  useEffect(() => {
+    if (!activeSession) return;
+    const interval = setInterval(() => {
+      const activeSessions = storageService.getActiveSessions();
+      const currentPassword = activeSession.password;
+      if (currentPassword && activeSessions[currentPassword]) {
+        const latestSession = activeSessions[currentPassword];
+        if (
+          latestSession.state !== activeSession.state ||
+          latestSession.currentQuestionIndex !== activeSession.currentQuestionIndex ||
+          JSON.stringify(latestSession.submissions) !== JSON.stringify(activeSession.submissions) ||
+          JSON.stringify(latestSession.participants) !== JSON.stringify(activeSession.participants)
+        ) {
+          setActiveSession(latestSession);
+        }
+      }
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [activeSession?.password, activeSession?.state, activeSession?.currentQuestionIndex]);
+
   // Connect WebSocket to backend server on port 3000
   const connectWebSocket = (pin: string, isHost: boolean, userPayload: any) => {
     try {
