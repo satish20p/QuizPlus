@@ -50,11 +50,11 @@ export const LearnerInterface: React.FC<LearnerInterfaceProps> = ({
   const urlPrn = searchParams.get('prn') || '';
   const urlName = searchParams.get('name') || currentUser.name || '';
 
-  const initialPin = activePinInput || searchParams.get('pin') || '';
-  const [pin, setPin] = useState(initialPin);
+  const initialPassword = activePinInput || searchParams.get('password') || searchParams.get('pin') || searchParams.get('code') || '';
+  const [pin, setPin] = useState(initialPassword);
   const [guestName, setGuestName] = useState(urlName);
   const [prn, setPrn] = useState(urlPrn);
-  const [joinStep, setJoinStep] = useState<1 | 2>(initialPin.trim().length >= 4 ? 2 : 1);
+  const [joinStep, setJoinStep] = useState<1 | 2>(initialPassword.trim().length >= 3 ? 2 : 1);
   const [selectedOptId, setSelectedOptId] = useState<string | null>(null);
   const [hasSubmitted, setHasSubmitted] = useState(false);
   const [deviceFrame, setDeviceFrame] = useState<boolean>(true); // Smartphone Frame toggle for realistic preview
@@ -66,12 +66,18 @@ export const LearnerInterface: React.FC<LearnerInterfaceProps> = ({
   const [isCameraScanning, setIsCameraScanning] = useState<boolean>(false);
   const [scanMessage, setScanMessage] = useState<string>('');
 
-  const handleParseUrlAndSetPin = (urlOrString: string) => {
-    // Extract 6-digit number sequence or pin parameter
-    const match = urlOrString.match(/pin=(\d{6})/i) || urlOrString.match(/\b(\d{6})\b/);
+  const handleParseUrlAndSetPassword = (urlOrString: string) => {
+    const urlParams = new URLSearchParams(urlOrString.includes('?') ? urlOrString.split('?')[1] : urlOrString);
+    const pwd = urlParams.get('password') || urlParams.get('pin') || urlParams.get('code') || urlParams.get('join');
+    if (pwd) {
+      setPin(pwd.trim());
+      setJoinStep(2);
+      return pwd.trim();
+    }
+    const match = urlOrString.match(/password=([^&]+)/i) || urlOrString.match(/pin=([^&]+)/i) || urlOrString.match(/code=([^&]+)/i);
     if (match && match[1]) {
       setPin(match[1]);
-      setJoinStep(2); // Automatically advance to Step 2: Name & PRN
+      setJoinStep(2);
       return match[1];
     }
     return null;
@@ -81,11 +87,10 @@ export const LearnerInterface: React.FC<LearnerInterfaceProps> = ({
     setIsCameraScanning(true);
     setScanMessage('Aligning QR Code in viewfinder...');
     setTimeout(() => {
-      // Auto detected PIN demo or active URL pin
-      const activePin = activePinInput || '829104';
-      setPin(activePin);
-      setJoinStep(2); // Automatically advance to Step 2: Name & PRN
-      setScanMessage(`Success! Scanned PIN: ${activePin}`);
+      const activePwd = activePinInput || 'REACT26';
+      setPin(activePwd);
+      setJoinStep(2);
+      setScanMessage(`Success! Scanned Password: ${activePwd}`);
       setTimeout(() => {
         setIsCameraScanning(false);
         setShowQrScannerModal(false);
@@ -96,12 +101,12 @@ export const LearnerInterface: React.FC<LearnerInterfaceProps> = ({
 
   const handleApplyPastedUrl = (e: React.FormEvent) => {
     e.preventDefault();
-    const extractedPin = handleParseUrlAndSetPin(pastedUrlInput);
-    if (extractedPin) {
+    const extractedPwd = handleParseUrlAndSetPassword(pastedUrlInput);
+    if (extractedPwd) {
       setShowUrlPasteModal(false);
       setPastedUrlInput('');
     } else {
-      alert('Could not find a valid 6-digit PIN in the provided URL/string. Please try again or type the 6-digit PIN manually.');
+      alert('Could not find a valid session password in the provided URL/string. Please try again or type the password manually.');
     }
   };
 
@@ -382,31 +387,30 @@ export const LearnerInterface: React.FC<LearnerInterfaceProps> = ({
                     <div className="w-full border-t border-slate-200"></div>
                   </div>
                   <div className="relative flex justify-center text-[10px] uppercase font-bold">
-                    <span className="bg-white px-2 text-slate-400">or enter pin code manually</span>
+                    <span className="bg-white px-2 text-slate-400">or enter password manually</span>
                   </div>
                 </div>
 
                 <form 
                   onSubmit={(e) => {
                     e.preventDefault();
-                    if (pin.trim().length >= 4) {
+                    if (pin.trim().length >= 2) {
                       setJoinStep(2);
                     } else {
-                      alert('Please enter a valid 6-digit PIN code.');
+                      alert('Please enter a valid session password.');
                     }
                   }} 
                   className="space-y-3 text-left"
                 >
                   <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1">6-Digit Session PIN</label>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">Session Password</label>
                     <input
                       type="text"
                       required
-                      placeholder="e.g. 829104"
+                      placeholder="e.g. REACT2026"
                       value={pin}
                       onChange={(e) => setPin(e.target.value)}
-                      className="w-full bg-slate-50 border border-slate-300 text-slate-900 font-mono text-center tracking-widest font-black px-3 py-3 rounded-xl text-xl focus:outline-none focus:ring-2 focus:ring-indigo-600 uppercase placeholder:text-slate-300 shadow-inner"
-                      maxLength={6}
+                      className="w-full bg-slate-50 border border-slate-300 text-slate-900 font-mono text-center tracking-wider font-black px-3 py-3 rounded-xl text-xl focus:outline-none focus:ring-2 focus:ring-indigo-600 uppercase placeholder:text-slate-300 shadow-inner"
                     />
                   </div>
 
@@ -424,11 +428,11 @@ export const LearnerInterface: React.FC<LearnerInterfaceProps> = ({
             {/* STEP 2: ENTER NAME & PRN */}
             {joinStep === 2 && (
               <div className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-200">
-                {/* Verified PIN banner with change option */}
+                {/* Verified Password banner with change option */}
                 <div className="p-2.5 bg-indigo-50 border border-indigo-200 rounded-xl flex items-center justify-between text-left">
                   <div>
-                    <span className="text-[10px] font-bold uppercase text-indigo-600">Quiz PIN Code:</span>
-                    <p className="text-base font-black font-mono text-indigo-950 tracking-wider">{pin || '829104'}</p>
+                    <span className="text-[10px] font-bold uppercase text-indigo-600">Session Password:</span>
+                    <p className="text-base font-black font-mono text-indigo-950 tracking-wider">{pin || 'REACT26'}</p>
                   </div>
                   <button
                     type="button"
@@ -436,7 +440,7 @@ export const LearnerInterface: React.FC<LearnerInterfaceProps> = ({
                     className="text-xs font-bold text-indigo-700 hover:text-indigo-900 bg-white border border-indigo-200 px-2.5 py-1 rounded-lg flex items-center gap-1 transition cursor-pointer shadow-2xs"
                   >
                     <Edit2 className="w-3 h-3" />
-                    Change PIN
+                    Change Password
                   </button>
                 </div>
 
@@ -939,9 +943,18 @@ export const LearnerInterface: React.FC<LearnerInterfaceProps> = ({
 
               <button
                 type="submit"
+                onClick={() => {
+                  const extractedPwd = handleParseUrlAndSetPassword(pastedUrlInput);
+                  if (!extractedPwd && pastedUrlInput.trim()) {
+                    setPin(pastedUrlInput.trim());
+                    setJoinStep(2);
+                    setShowUrlPasteModal(false);
+                    setPastedUrlInput('');
+                  }
+                }}
                 className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold py-3 rounded-xl text-xs shadow-md transition cursor-pointer flex items-center justify-center gap-2"
               >
-                Extract PIN & Join
+                Extract Password & Join
               </button>
             </form>
           </div>

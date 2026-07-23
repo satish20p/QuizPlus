@@ -547,7 +547,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
               <div className="flex items-start justify-between">
                 <div>
                   <span className="text-xs font-mono font-bold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded border border-indigo-200">
-                    PIN: {rep.sessionPin}
+                    Password: {rep.sessionPassword}
                   </span>
                   <h3 className="font-extrabold text-slate-900 text-lg mt-1">{rep.quizTitle}</h3>
                   <p className="text-xs text-slate-500">Host: {rep.trainerName} • {new Date(rep.date).toLocaleDateString()}</p>

@@ -9,7 +9,7 @@ export const exportService = {
     // 1. Overview Sheet
     const overviewData = [
       ['Quiz Title', report.quizTitle],
-      ['Session PIN', report.sessionPin],
+      ['Session Password', report.sessionPassword],
       ['Trainer', report.trainerName],
       ['Date Hosted', new Date(report.date).toLocaleString()],
       ['Total Participants', report.totalParticipants],
@@ -46,7 +46,7 @@ export const exportService = {
     XLSX.utils.book_append_sheet(wb, questionSheet, 'Question Analytics');
 
     // Generate and download file
-    const filename = `QuizPulse_Report_${report.sessionPin}_${report.quizTitle.replace(/[^a-zA-Z0-9]/g, '_')}.xlsx`;
+    const filename = `QuizPulse_Report_${report.sessionPassword}_${report.quizTitle.replace(/[^a-zA-Z0-9]/g, '_')}.xlsx`;
     XLSX.writeFile(wb, filename);
   },
 
@@ -64,7 +64,7 @@ export const exportService = {
 
     doc.setFontSize(10);
     doc.setTextColor(100, 116, 139); // Slate-500
-    doc.text(`Generated on ${new Date().toLocaleDateString()} | Session PIN: ${report.sessionPin}`, 14, 26);
+    doc.text(`Generated on ${new Date().toLocaleDateString()} | Session Password: ${report.sessionPassword}`, 14, 26);
 
     // Divider
     doc.setDrawColor(226, 232, 240);
@@ -169,7 +169,7 @@ export const exportService = {
       doc.text(`QuizPulse Platform • Confidential Report • Page ${i} of ${totalPages}`, 14, 287);
     }
 
-    const filename = `QuizPulse_Grade_Report_${report.sessionPin}.pdf`;
+    const filename = `QuizPulse_Grade_Report_${report.sessionPassword}.pdf`;
     doc.save(filename);
   }
 };

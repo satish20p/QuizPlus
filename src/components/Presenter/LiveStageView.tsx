@@ -6,14 +6,14 @@ import { Trophy, Users, Clock, QrCode, Radio, Award, BarChart3, CheckCircle2 } f
 interface LiveStageViewProps {
   session: LiveSession | null;
   quiz: Quiz | null;
-  onSelectSessionPin: (pin: string) => void;
+  onSelectSessionPassword: (password: string) => void;
   activeSessions: LiveSession[];
 }
 
 export const LiveStageView: React.FC<LiveStageViewProps> = ({
   session,
   quiz,
-  onSelectSessionPin,
+  onSelectSessionPassword,
   activeSessions
 }) => {
   if (!session || !quiz) {
@@ -34,12 +34,12 @@ export const LiveStageView: React.FC<LiveStageViewProps> = ({
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-left max-w-xl mx-auto pt-4">
               {activeSessions.map((s) => (
                 <button
-                  key={s.pin}
-                  onClick={() => onSelectSessionPin(s.pin)}
+                  key={s.password}
+                  onClick={() => onSelectSessionPassword(s.password)}
                   className="bg-slate-50 hover:bg-slate-100 border border-slate-200 p-4 rounded-2xl transition cursor-pointer text-left space-y-2 group shadow-sm"
                 >
                   <span className="text-xs font-mono font-bold text-amber-700 bg-amber-100 px-2 py-0.5 rounded border border-amber-200">
-                    PIN: {s.pin}
+                    Password: {s.password}
                   </span>
                   <h3 className="font-bold text-slate-900 text-base group-hover:text-indigo-600 transition">{s.quizTitle}</h3>
                   <p className="text-xs text-slate-500">Host: {s.trainerName}</p>
@@ -53,7 +53,7 @@ export const LiveStageView: React.FC<LiveStageViewProps> = ({
   }
 
   const currentQ: Question | undefined = quiz.questions[session.currentQuestionIndex];
-  const joinUrl = `${window.location.origin}?pin=${session.pin}`;
+  const joinUrl = `${window.location.origin}?password=${session.password}`;
   const totalConnected = Object.keys(session.participants || {}).length;
 
   const currentSubmissions = session.submissions.filter(s => s.questionId === currentQ?.id);
@@ -88,8 +88,8 @@ export const LiveStageView: React.FC<LiveStageViewProps> = ({
             </div>
             <div>
               <p className="text-xs text-slate-500 uppercase font-bold tracking-wider">Join at {window.location.host}</p>
-              <p className="text-xs text-slate-500 font-semibold mt-0.5">PIN CODE:</p>
-              <p className="text-3xl font-mono font-black text-indigo-700 tracking-wider">{session.pin}</p>
+              <p className="text-xs text-slate-500 font-semibold mt-0.5">PASSWORD:</p>
+              <p className="text-3xl font-mono font-black text-indigo-700 tracking-wider">{session.password}</p>
             </div>
           </div>
           <p className="text-[10px] text-slate-500 max-w-xs font-medium border-t border-slate-200 pt-1.5 mt-1">
@@ -104,7 +104,7 @@ export const LiveStageView: React.FC<LiveStageViewProps> = ({
           <div className="max-w-xl mx-auto space-y-4">
             <h2 className="text-4xl font-black text-slate-900">Join the Live Quiz Now!</h2>
             <p className="text-slate-600 text-lg">
-              Scan the QR code above or enter PIN <span className="font-mono text-indigo-700 font-bold">{session.pin}</span> on your phone.
+              Scan the QR code above or enter password <span className="font-mono text-indigo-700 font-bold">{session.password}</span> on your phone.
             </p>
           </div>
 

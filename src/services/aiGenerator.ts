@@ -91,6 +91,7 @@ Each question MUST have:
     category: parsed.category || 'General Knowledge',
     authorId,
     authorName,
+    password: Math.random().toString(36).substring(2, 8).toUpperCase(),
     questions,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),

@@ -146,9 +146,9 @@ export const storageService = {
   },
 
   createLiveSession(quiz: Quiz, trainer: User): LiveSession {
-    const pin = Math.floor(100000 + Math.random() * 900000).toString();
+    const password = quiz.password || Math.random().toString(36).substring(2, 8).toUpperCase();
     const session: LiveSession = {
-      pin,
+      password,
       quizId: quiz.id,
       quizTitle: quiz.title,
       trainerId: trainer.id,
@@ -164,7 +164,7 @@ export const storageService = {
     };
 
     const active = this.getActiveSessions();
-    active[pin] = session;
+    active[password] = session;
     this.saveActiveSessions(active);
 
     // Update timesHosted on quiz
@@ -172,19 +172,19 @@ export const storageService = {
     const updatedQuizzes = quizzes.map(q => q.id === quiz.id ? { ...q, timesHosted: (q.timesHosted || 0) + 1 } : q);
     this.saveQuizzes(updatedQuizzes);
 
-    this.addAuditLog(trainer.id, trainer.name, trainer.role, 'SESSION_LAUNCHED', `Launched live session for "${quiz.title}" with PIN ${pin}.`);
+    this.addAuditLog(trainer.id, trainer.name, trainer.role, 'SESSION_LAUNCHED', `Launched live session for "${quiz.title}" with password ${password}.`);
 
     return session;
   },
 
-  getSession(pin: string): LiveSession | null {
+  getSession(password: string): LiveSession | null {
     const active = this.getActiveSessions();
-    return active[pin] || null;
+    return active[password] || null;
   },
 
   updateSession(session: LiveSession): void {
     const active = this.getActiveSessions();
-    active[session.pin] = session;
+    active[session.password] = session;
     this.saveActiveSessions(active);
 
     if (session.state === 'ended') {
@@ -194,7 +194,7 @@ export const storageService = {
 
   ensureSessionReportSaved(session: LiveSession): void {
     const reports = this.getReports();
-    const existing = reports.find(r => r.sessionPin === session.pin);
+    const existing = reports.find(r => r.sessionPassword === session.password);
 
     const participantsList = Object.values(session.participants || {});
     const sortedParticipants = [...participantsList].sort((a, b) => b.score - a.score);
@@ -241,7 +241,7 @@ export const storageService = {
 
     const report: SessionReport = {
       id: existing?.id || `rep-${Date.now()}`,
-      sessionPin: session.pin,
+      sessionPassword: session.password,
       quizId: session.quizId,
       quizTitle: session.quizTitle,
       trainerName: session.trainerName,

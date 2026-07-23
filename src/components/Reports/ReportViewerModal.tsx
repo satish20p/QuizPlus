@@ -26,7 +26,7 @@ export const ReportViewerModal: React.FC<ReportViewerModalProps> = ({ report, on
         <div className="p-6 border-b border-slate-200 flex items-center justify-between bg-slate-50 sticky top-0 z-20 rounded-t-2xl">
           <div>
             <span className="text-xs font-mono font-bold text-indigo-700 bg-indigo-50 px-2.5 py-0.5 rounded border border-indigo-200">
-              PIN: {report.sessionPin}
+              Password: {report.sessionPassword}
             </span>
             <h2 className="text-2xl font-black text-slate-900 mt-1">{report.quizTitle}</h2>
             <p className="text-xs text-slate-500 font-medium">Host: {report.trainerName} • Date: {new Date(report.date).toLocaleString()}</p>

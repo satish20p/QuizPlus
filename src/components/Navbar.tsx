@@ -17,8 +17,8 @@ interface NavbarProps {
   allUsers: User[];
   activeView: 'admin' | 'trainer' | 'learner' | 'presenter';
   onViewChange: (view: 'admin' | 'trainer' | 'learner' | 'presenter') => void;
-  onJoinSession: (pin: string) => void;
-  activeSessionPin?: string | null;
+  onJoinSession: (password: string) => void;
+  activeSessionPassword?: string | null;
   isTrainerLoggedIn?: boolean;
   onTrainerLogout?: () => void;
 }
@@ -30,18 +30,18 @@ export const Navbar: React.FC<NavbarProps> = ({
   activeView,
   onViewChange,
   onJoinSession,
-  activeSessionPin,
+  activeSessionPassword,
   isTrainerLoggedIn = false,
   onTrainerLogout,
 }) => {
-  const [pinInput, setPinInput] = useState('');
+  const [passwordInput, setPasswordInput] = useState('');
 
   const handleQuickJoin = (e: React.FormEvent) => {
     e.preventDefault();
-    if (pinInput.trim()) {
-      onJoinSession(pinInput.trim());
+    if (passwordInput.trim()) {
+      onJoinSession(passwordInput.trim());
       onViewChange('learner');
-      setPinInput('');
+      setPasswordInput('');
     }
   };
 
@@ -68,16 +68,15 @@ export const Navbar: React.FC<NavbarProps> = ({
             </div>
           </div>
 
-          {/* Quick PIN Join Bar */}
+          {/* Quick Password Join Bar */}
           <form onSubmit={handleQuickJoin} className="hidden md:flex items-center bg-slate-50 rounded-lg p-1 border border-slate-200">
-            <span className="text-xs text-slate-600 font-bold px-2.5">JOIN PIN:</span>
+            <span className="text-xs text-slate-600 font-bold px-2.5">PASSWORD:</span>
             <input
               type="text"
-              placeholder="e.g. 829104"
-              value={pinInput}
-              onChange={(e) => setPinInput(e.target.value)}
-              className="bg-white border border-slate-300 text-slate-900 px-3 py-1 rounded text-sm font-mono font-bold tracking-wider w-28 focus:outline-none focus:ring-1 focus:ring-indigo-600 uppercase placeholder:text-slate-400"
-              maxLength={6}
+              placeholder="e.g. REACT2026"
+              value={passwordInput}
+              onChange={(e) => setPasswordInput(e.target.value)}
+              className="bg-white border border-slate-300 text-slate-900 px-3 py-1 rounded text-sm font-mono font-bold tracking-wider w-32 focus:outline-none focus:ring-1 focus:ring-indigo-600 uppercase placeholder:text-slate-400"
             />
             <button
               type="submit"
@@ -101,7 +100,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             >
               <Smartphone className="w-4 h-4 text-emerald-500 shrink-0" />
               <span className="inline">Learner</span>
-              {activeSessionPin && (
+              {activeSessionPassword && (
                 <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping absolute -top-0.5 -right-0.5"></span>
               )}
             </button>

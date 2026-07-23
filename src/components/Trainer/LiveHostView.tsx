@@ -67,7 +67,7 @@ export const LiveHostView: React.FC<LiveHostViewProps> = ({
     return () => clearInterval(timer);
   }, [session, onUpdateSession]);
 
-  const joinUrl = `${window.location.origin}?pin=${session.pin}`;
+  const joinUrl = `${window.location.origin}?password=${session.password}`;
 
   const handleCopyLink = () => {
     navigator.clipboard.writeText(joinUrl);
@@ -182,7 +182,7 @@ export const LiveHostView: React.FC<LiveHostViewProps> = ({
 
     const report: SessionReport = {
       id: `rep-${Date.now()}`,
-      sessionPin: session.pin,
+      sessionPassword: session.password,
       quizId: quiz.id,
       quizTitle: quiz.title,
       trainerName: session.trainerName,
@@ -239,8 +239,8 @@ export const LiveHostView: React.FC<LiveHostViewProps> = ({
 
           <div className="flex flex-wrap items-center gap-4 text-xs">
             <div className="bg-slate-950 border border-slate-800 px-3 py-1.5 rounded-xl font-mono text-indigo-300 font-bold flex items-center gap-2">
-              <span className="text-slate-500">PIN:</span>
-              <span className="text-lg tracking-widest text-white">{session.pin}</span>
+              <span className="text-slate-500">Password:</span>
+              <span className="text-lg tracking-widest text-white">{session.password}</span>
             </div>
 
             <button
@@ -365,7 +365,7 @@ export const LiveHostView: React.FC<LiveHostViewProps> = ({
             </div>
             <h2 className="text-2xl font-black text-white">Waiting for Participants to Join...</h2>
             <p className="text-slate-400 text-sm">
-              Direct participants to scan the QR code or enter PIN <span className="font-mono text-indigo-300 font-bold">{session.pin}</span> at <span className="font-mono text-white">{window.location.origin}</span>.
+              Direct participants to scan the QR code or enter password <span className="font-mono text-indigo-300 font-bold">{session.password}</span> at <span className="font-mono text-white">{window.location.origin}</span>.
             </p>
           </div>
 
@@ -580,8 +580,8 @@ export const LiveHostView: React.FC<LiveHostViewProps> = ({
               <QRCodeSVG value={joinUrl} size={200} />
             </div>
             <div>
-              <p className="text-xs text-slate-400">Join PIN Code:</p>
-              <p className="text-3xl font-mono font-extrabold text-amber-400">{session.pin}</p>
+              <p className="text-xs text-slate-400">Join Password:</p>
+              <p className="text-3xl font-mono font-extrabold text-amber-400">{session.password}</p>
             </div>
             <button
               onClick={() => setShowQrModal(false)}

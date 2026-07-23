@@ -33,6 +33,7 @@ export interface Quiz {
   category: string;
   authorId: string;
   authorName: string;
+  password: string; // Quiz password set by trainer for live session entry
   questions: Question[];
   createdAt: string;
   updatedAt: string;
@@ -73,7 +74,7 @@ export interface Submission {
 }
 
 export interface LiveSession {
-  pin: string; // 6-digit unique pin code e.g. "482910"
+  password: string; // Quiz live password set by trainer
   quizId: string;
   quizTitle: string;
   trainerId: string;
@@ -91,7 +92,7 @@ export interface LiveSession {
 
 export interface SessionReport {
   id: string;
-  sessionPin: string;
+  sessionPassword: string;
   quizId: string;
   quizTitle: string;
   trainerName: string;

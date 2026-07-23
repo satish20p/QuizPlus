@@ -33,6 +33,7 @@ export const QuizEditorModal: React.FC<QuizEditorModalProps> = ({
   const [title, setTitle] = useState(quizToEdit?.title || '');
   const [description, setDescription] = useState(quizToEdit?.description || '');
   const [category, setCategory] = useState(quizToEdit?.category || 'Engineering & Tech');
+  const [password, setPassword] = useState(quizToEdit?.password || Math.random().toString(36).substring(2, 8).toUpperCase());
   const [questions, setQuestions] = useState<Question[]>(
     quizToEdit?.questions.map((q) => ({
       ...q,
@@ -138,6 +139,7 @@ export const QuizEditorModal: React.FC<QuizEditorModalProps> = ({
       category,
       authorId,
       authorName,
+      password: password.trim() || Math.random().toString(36).substring(2, 8).toUpperCase(),
       questions: processedQuestions,
       createdAt: quizToEdit?.createdAt || new Date().toISOString(),
       updatedAt: new Date().toISOString(),
@@ -208,6 +210,21 @@ export const QuizEditorModal: React.FC<QuizEditorModalProps> = ({
                 <option value="Product & Design">Product & Design</option>
                 <option value="Compliance & HR">Compliance & HR</option>
               </select>
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">
+                Quiz Password / Access Code *
+              </label>
+              <input
+                type="text"
+                required
+                placeholder="e.g. REACT2026"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full bg-white border border-slate-300 text-slate-900 font-mono font-bold px-3 py-2 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-600 uppercase"
+              />
+              <p className="text-[10px] text-slate-500 mt-0.5">Learners will enter this password to join the live session.</p>
             </div>
 
             <div className="md:col-span-3">

@@ -216,14 +216,18 @@ export const TrainerPortal: React.FC<TrainerPortalProps> = ({
                 </p>
               </div>
 
-              <div className="bg-slate-50 p-3 rounded-xl border border-slate-200 grid grid-cols-2 text-xs">
+              <div className="bg-slate-50 p-3 rounded-xl border border-slate-200 grid grid-cols-3 text-xs gap-2">
                 <div>
                   <p className="text-slate-500 font-medium">Questions:</p>
-                  <p className="font-bold text-slate-800">{quiz.questions.length} items</p>
+                  <p className="font-bold text-slate-800">{quiz.questions.length}</p>
                 </div>
                 <div>
-                  <p className="text-slate-500 font-medium">Times Hosted:</p>
-                  <p className="font-bold text-emerald-600">{quiz.timesHosted || 0} sessions</p>
+                  <p className="text-slate-500 font-medium">Password:</p>
+                  <p className="font-bold font-mono text-indigo-600 truncate">{quiz.password || 'N/A'}</p>
+                </div>
+                <div>
+                  <p className="text-slate-500 font-medium">Hosted:</p>
+                  <p className="font-bold text-emerald-600">{quiz.timesHosted || 0}</p>
                 </div>
               </div>
 
@@ -234,7 +238,7 @@ export const TrainerPortal: React.FC<TrainerPortalProps> = ({
                   className="w-full bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-bold py-2.5 rounded-xl text-xs shadow-md flex items-center justify-center gap-2 transition cursor-pointer"
                 >
                   <Play className="w-4 h-4 fill-current" />
-                  Launch Live Session (QR & PIN)
+                  Launch Live Session (QR & Password)
                 </button>
 
                 <div className="flex gap-2">
@@ -277,7 +281,7 @@ export const TrainerPortal: React.FC<TrainerPortalProps> = ({
               <table className="w-full text-left text-sm text-slate-700">
                 <thead className="bg-slate-50 text-slate-600 text-xs font-semibold uppercase tracking-wider border-b border-slate-200">
                   <tr>
-                    <th className="px-6 py-3.5">Session PIN</th>
+                    <th className="px-6 py-3.5">Session Password</th>
                     <th className="px-6 py-3.5">Quiz Title</th>
                     <th className="px-6 py-3.5">Date Hosted</th>
                     <th className="px-6 py-3.5">Participants</th>
@@ -289,7 +293,7 @@ export const TrainerPortal: React.FC<TrainerPortalProps> = ({
                   {reports.map((rep) => (
                     <tr key={rep.id} className="hover:bg-slate-50 transition">
                       <td className="px-6 py-4 font-mono font-bold text-indigo-700">
-                        {rep.sessionPin}
+                        {rep.sessionPassword}
                       </td>
                       <td className="px-6 py-4 font-bold text-slate-900">
                         {rep.quizTitle}

@@ -48,21 +48,22 @@ export default function App() {
     const loadedLogs = storageService.getAuditLogs();
     setAuditLogs(loadedLogs);
 
-    // Check URL query param or hash for ?pin=XXXXXX / ?code=XXXXXX / #pin=XXXXXX
+    // Check URL query param or hash for ?password=XXXX / ?pin=XXXX / ?code=XXXX
     const searchParams = new URLSearchParams(window.location.search);
     const hashString = window.location.hash;
-    const extractedPin = 
+    const extractedPassword = 
+      searchParams.get('password') || 
       searchParams.get('pin') || 
       searchParams.get('code') || 
       searchParams.get('join') || 
-      (hashString.match(/\b(\d{6})\b/)?.[1] || null);
+      (hashString.match(/password=([^&]+)/)?.[1] || hashString.match(/\b(\d{6})\b/)?.[1] || null);
 
     const nameParam = searchParams.get('name') || 'Guest Participant';
     const prnParam = searchParams.get('prn') || '';
 
-    if (extractedPin) {
+    if (extractedPassword) {
       setActiveView('learner');
-      handleJoinSessionByPin(extractedPin, nameParam, prnParam);
+      handleJoinSessionByPin(extractedPassword, nameParam, prnParam);
     }
   }, []);
 
@@ -108,7 +109,7 @@ export default function App() {
     setActiveSession(session);
     setActiveQuiz(quiz);
 
-    connectWebSocket(session.pin, true, session);
+    connectWebSocket(session.password, true, session);
   };
 
   const handleUpdateSession = (updatedSession: LiveSession) => {
@@ -118,18 +119,18 @@ export default function App() {
     if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
       wsRef.current.send(JSON.stringify({
         type: 'HOST_ACTION',
-        pin: updatedSession.pin,
+        pin: updatedSession.password,
         payload: updatedSession
       }));
     }
   };
 
-  const handleJoinSessionByPin = (pin: string, learnerName: string, prn?: string) => {
-    let session = storageService.getSession(pin);
+  const handleJoinSessionByPin = (password: string, learnerName: string, prn?: string) => {
+    let session = storageService.getSession(password);
     if (!session) {
       // Find default or recent session
       const activeSessions = storageService.getActiveSessions();
-      session = activeSessions[pin] || null;
+      session = activeSessions[password] || null;
     }
 
     if (session) {
@@ -154,13 +155,13 @@ export default function App() {
       const quiz = quizzes.find(q => q.id === activeRoom.quizId) || null;
       setActiveQuiz(quiz);
 
-      connectWebSocket(pin, false, {
+      connectWebSocket(password, false, {
         userId: participantId,
         userName: learnerName,
         prn: prn || ''
       });
     } else {
-      alert(`Session PIN ${pin} not found. Please verify the 6-digit PIN.`);
+      alert(`Session password "${password}" not valid or session not active. Please check the quiz password.`);
     }
   };
 
@@ -170,7 +171,7 @@ export default function App() {
     if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
       wsRef.current.send(JSON.stringify({
         type: 'SUBMIT_ANSWER',
-        pin: activeSession.pin,
+        pin: activeSession.password,
         payload: { submission }
       }));
     } else {
@@ -227,8 +228,8 @@ export default function App() {
         allUsers={users}
         activeView={activeView}
         onViewChange={(v) => setActiveView(v)}
-        onJoinSession={(pin) => handleJoinSessionByPin(pin, fallbackUser.name)}
-        activeSessionPin={activeSession?.pin}
+        onJoinSession={(pwd) => handleJoinSessionByPin(pwd, fallbackUser.name)}
+        activeSessionPassword={activeSession?.password}
         isTrainerLoggedIn={isTrainerLoggedIn}
         onTrainerLogout={handleTrainerLogout}
       />
@@ -295,7 +296,7 @@ export default function App() {
             quiz={activeQuiz}
             onJoinByPin={handleJoinSessionByPin}
             onSubmitAnswer={handleSubmitAnswer}
-            activePinInput={activeSession?.pin}
+            activePinInput={activeSession?.password}
           />
         )}
 
@@ -304,7 +305,7 @@ export default function App() {
           <LiveStageView
             session={activeSession}
             quiz={activeQuiz}
-            onSelectSessionPin={(pin) => handleJoinSessionByPin(pin, 'Presenter Display')}
+            onSelectSessionPassword={(password) => handleJoinSessionByPin(password, 'Presenter Display')}
             activeSessions={Object.values(storageService.getActiveSessions())}
           />
         )}

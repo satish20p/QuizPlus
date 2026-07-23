@@ -74,6 +74,7 @@ export const INITIAL_QUIZZES: Quiz[] = [
     category: 'Engineering & Tech',
     authorId: 'user-trainer-1',
     authorName: 'Dr. Alex Mercer',
+    password: 'REACT26',
     isPublished: true,
     timesHosted: 14,
     createdAt: '2026-04-10T10:00:00Z',
@@ -148,6 +149,7 @@ export const INITIAL_QUIZZES: Quiz[] = [
     category: 'Corporate Security',
     authorId: 'user-trainer-2',
     authorName: 'Elena Rostova',
+    password: 'SECURE99',
     isPublished: true,
     timesHosted: 8,
     createdAt: '2026-05-01T09:30:00Z',
@@ -192,6 +194,7 @@ export const INITIAL_QUIZZES: Quiz[] = [
     category: 'Artificial Intelligence',
     authorId: 'user-trainer-1',
     authorName: 'Dr. Alex Mercer',
+    password: 'AILLM26',
     isPublished: true,
     timesHosted: 22,
     createdAt: '2026-05-15T11:00:00Z',
@@ -234,7 +237,7 @@ export const INITIAL_QUIZZES: Quiz[] = [
 export const INITIAL_REPORTS: SessionReport[] = [
   {
     id: 'rep-101',
-    sessionPin: '829104',
+    sessionPassword: 'REACT26',
     quizId: 'quiz-1',
     quizTitle: 'Modern Full-Stack Web Architecture 2026',
     trainerName: 'Dr. Alex Mercer',
