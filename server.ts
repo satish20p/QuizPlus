@@ -33,28 +33,29 @@ wss.on('connection', (ws: ClientWs) => {
     try {
       const data = JSON.parse(messageRaw.toString());
       const { type, pin, payload } = data;
+      const rawPin = pin || payload?.password || payload?.pin || payload?.sessionPassword;
+      if (!rawPin) return;
+      const normalizedPin = String(rawPin).trim().toUpperCase();
 
-      if (!pin) return;
-
-      if (!rooms[pin]) {
-        rooms[pin] = {
+      if (!rooms[normalizedPin]) {
+        rooms[normalizedPin] = {
           clients: new Set(),
           sessionState: null
         };
       }
 
-      const room = rooms[pin];
+      const room = rooms[normalizedPin];
 
       switch (type) {
         case 'HOST_JOIN':
-          ws.roomPin = pin;
+          ws.roomPin = normalizedPin;
           ws.isHost = true;
           room.hostWs = ws;
           room.clients.add(ws);
           if (payload) {
             room.sessionState = payload;
           }
-          broadcastToRoom(pin, {
+          broadcastToRoom(normalizedPin, {
             type: 'SESSION_UPDATE',
             sessionState: room.sessionState,
             activeCount: room.clients.size
@@ -62,7 +63,7 @@ wss.on('connection', (ws: ClientWs) => {
           break;
 
         case 'LEARNER_JOIN':
-          ws.roomPin = pin;
+          ws.roomPin = normalizedPin;
           ws.isHost = false;
           ws.userId = payload?.userId || `guest-${Date.now()}`;
           ws.userName = payload?.userName || 'Anonymous Participant';
@@ -85,7 +86,7 @@ wss.on('connection', (ws: ClientWs) => {
             };
           }
 
-          broadcastToRoom(pin, {
+          broadcastToRoom(normalizedPin, {
             type: 'SESSION_UPDATE',
             sessionState: room.sessionState,
             activeCount: room.clients.size
@@ -96,7 +97,7 @@ wss.on('connection', (ws: ClientWs) => {
           if (payload) {
             room.sessionState = payload;
           }
-          broadcastToRoom(pin, {
+          broadcastToRoom(normalizedPin, {
             type: 'SESSION_UPDATE',
             sessionState: room.sessionState,
             activeCount: room.clients.size
@@ -130,7 +131,7 @@ wss.on('connection', (ws: ClientWs) => {
                 }
               }
 
-              broadcastToRoom(pin, {
+              broadcastToRoom(normalizedPin, {
                 type: 'SESSION_UPDATE',
                 sessionState: room.sessionState,
                 activeCount: room.clients.size

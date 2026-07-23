@@ -178,8 +178,27 @@ export const storageService = {
   },
 
   getSession(password: string): LiveSession | null {
+    if (!password) return null;
     const active = this.getActiveSessions();
-    return active[password] || null;
+    const cleanPwd = password.trim().toUpperCase();
+    if (active[cleanPwd]) return active[cleanPwd];
+    for (const [key, session] of Object.entries(active)) {
+      if (key.toUpperCase() === cleanPwd || session.password?.toUpperCase() === cleanPwd) {
+        return session;
+      }
+    }
+
+    // Fallback: If quiz exists with this password, auto-launch session for learners
+    const quizzes = this.getQuizzes();
+    const matchingQuiz = quizzes.find(q => q.password && q.password.toUpperCase() === cleanPwd);
+    if (matchingQuiz) {
+      const users = this.getUsers();
+      const trainer = users.find(u => u.id === matchingQuiz.authorId) || users.find(u => u.role === 'trainer') || { id: 'admin-1', name: 'System Trainer', role: 'trainer' as const };
+      const newSession = this.createLiveSession(matchingQuiz, trainer as any);
+      return newSession;
+    }
+
+    return null;
   },
 
   updateSession(session: LiveSession): void {
